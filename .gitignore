@@ -22,3 +22,6 @@ gradle-app.setting
 
 # VSCode
 .vscode
+
+# DFC Specific
+dctmutils/documentum/
