@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.SecurityManager;
 
-class AppTest {
+class UtilsTest {
 
     @Test 
     void checkPingBroker() {
@@ -99,4 +99,32 @@ class AppTest {
             System.setSecurityManager(origManager);
         }
     } 
+
+    @Test
+    void checkPrintMapCmd() {
+        SecurityManager origManager = System.getSecurityManager();
+        NoExitSecurityManager newManager = new NoExitSecurityManager();
+        System.setSecurityManager(newManager);
+        try {
+            NoExitSecurityManager.ExitException exitException = 
+                assertThrows(NoExitSecurityManager.ExitException.class, () -> {
+                    Utils.main(new String[] {"printmap"});
+                }, "Must call System.exit(int)");
+            assertEquals(1, exitException.status, "Must return 1 when called with no args");
+            exitException = 
+                assertThrows(NoExitSecurityManager.ExitException.class, () -> {
+                    Utils.main(new String[] {"printmap", "ubuntu-mini", "1689"});
+                }, "Must call System.exit(int)");
+            assertEquals(1, exitException.status, "Must return 1 when called with proper number of but invalid args");
+            exitException = 
+                assertThrows(NoExitSecurityManager.ExitException.class, () -> {
+                    Utils.main(new String[] {"printmap", "ubuntu-mini", "30189"});
+                }, "Must call System.exit(int)");
+            assertEquals(0, exitException.status, "Must return 0 when called with proper number of valid args");
+        }
+        finally {
+            System.setSecurityManager(origManager);
+        }
+    } 
+
 }

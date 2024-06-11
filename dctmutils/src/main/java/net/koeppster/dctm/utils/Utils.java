@@ -12,7 +12,6 @@ import com.documentum.com.DfClientX;
 import com.documentum.fc.common.*;
 import com.documentum.fc.client.*;
 import com.documentum.fc.common.DfException;
-import com.documentum.fc.common.admin.DfAdminUtils;
 
 public class Utils {
 
@@ -36,23 +35,34 @@ public class Utils {
         }
     }
     
-    public static void printBrokerMap(String host, String port) {
-        IDfClient client = new DfClient();
+    public static boolean printBrokerMap(String host, String port) {
+        DfClientX clientx = new DfClientX();
         try {
-            IDfDocbaseMap map = (IDfDocbaseMap) client.getDocbaseMapEx("tcp", host, port);
+            IDfDocbrokerClient client = clientx.getDocbrokerClient();
+            IDfDocbaseMap map = client.getDocbaseMapFromSpecificDocbroker("tcp", host, port);
             for (int i=0; i<map.getDocbaseCount();i++) {
-                IDfServerMap serverMap = (IDfServerMap) map.getServerMap(i);
                 System.out.printf("docbase: %s%n",map.getDocbaseName(i));
+                IDfServerMap serverMap = (IDfServerMap) client.getServerMapFromSpecificDocbroker(map.getDocbaseName(i), "tcp", host, port);
                 for (int j=0;j<serverMap.getServerCount();j++) {
-                    System.out.printf("\tserver_name: %s%n",serverMap.getServerName(j)); 
-                    System.out.printf("\thost_name: %s%n",serverMap.getHostName(j));
-                    System.out.printf("\taddr: %s%n",serverMap.getConnectionAddress(j));
-                    System.out.printf("\tport: %d%n",serverMap.getInt("i_port_number"));
+                    int docbasePort = Integer.parseInt(serverMap.getConnectionAddress(j)
+                        .split(" ")[2],16);
+                    System.out.printf("  server_name: %s%n",serverMap.getServerName(j)); 
+                    System.out.printf("  host_name: %s%n",serverMap.getHostName(j));
+                    System.out.printf("  addr: %s%n",serverMap.getConnectionAddress(j));
+                    if ((null != serverMap.getConnectionAddress6(j)) && (serverMap.getConnectionAddress(j).isEmpty()))
+                        System.out.printf("  addrv6: %s%n",serverMap.getConnectionAddress6(j));
+                    System.out.printf("  protocol: %s%n",serverMap.getConnectionProtocol(j));
+                    System.out.println("  # Calculated server IPV4 Address");
+                    System.out.printf("  ipv4: %s%n",serverMap.getConnectionAddress(j).split(" ")[4]);
+                    System.out.println("  # Calculated server non-secure port");
+                    System.out.printf("  port: %d%n",docbasePort);
                 }
             }
+            return true;
         }
         catch (DfException e) {
             System.err.printf("Error Printing Docbroker Map.  Message is %s%n",e.getMessage());
+            return false;
         }
     }
 
@@ -177,7 +187,9 @@ public class Utils {
                     printHelp("Expecting <host> <port>");
                     exitCode = 1;
                 }
-                printBrokerMap(args[1], args[2]);                
+                else {
+                    exitCode = printBrokerMap(args[1], args[2]) ? 0 : 1;                
+                }
                 break;
 
             case "checklogin":
