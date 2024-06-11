@@ -3,32 +3,85 @@
  */
 package net.koeppster.dctm.utils;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 
 import net.koeppster.NoExitSecurityManager;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.SecurityManager;
+import java.util.Properties;
 
 class UtilsTest {
 
-    @Test 
+    static Properties props = new Properties();
+
+    @BeforeAll
+    static void loadProps() throws FileNotFoundException, IOException {
+        InputStream propStream = UtilsTest.class.getClassLoader().getResourceAsStream("test.properties");
+        props.load(propStream);
+    }
+    
+    @Test
     void checkPingBroker() {
-        assertTrue(Utils.pingDocbroker("ubuntu-mini", "30189"),"Operating Docbroker Reported Up");
-        assertFalse(Utils.pingDocbroker("ubuntu-mini", "30178"),"Check via invalid port reported down");
+        assertTrue(
+            Utils.pingDocbroker(props.getProperty("docbroker.host"),
+                                props.getProperty("docbroker.good.port")),
+    "Operating Docbroker Reported Up"
+        );
+        assertFalse(
+            Utils.pingDocbroker(props.getProperty("docbroker.host"),
+                                props.getProperty("docbroker.bad.port")),
+    "Check via invalid port reported down"
+        );
     }
 
     @Test
     void checkPingDocbase() {
-        assertTrue(Utils.pingDocbase("ubuntu-mini", "30189", "sandbox"),"Operating docbase reported up");
-        assertFalse(Utils.pingDocbase("ubuntu-mini", "30189", "badbox"),"Invalid docbase reported unavailable");
+        assertTrue(
+            Utils.pingDocbase(
+                props.getProperty("docbroker.host"), 
+                props.getProperty("docbroker.good.port"), 
+                props.getProperty("docbase.good.name")
+            ),
+            "Operating docbase reported up"
+        );
+        assertFalse(
+            Utils.pingDocbase(
+                props.getProperty("docbroker.host"),
+                props.getProperty("docbroker.good.port"), 
+                props.getProperty("docbase.bad.name")
+            ),
+            "Invalid docbase reported unavailable"
+        );
     }
 
     @Test
     void checkCheckLogin() {
-        assertTrue(Utils.checkLogin("ubuntu-mini", "30189", "sandbox", "sandbox", "changeme"),"Login Attempt reported success");
-        assertFalse(Utils.checkLogin("ubuntu-mini", "30189", "badbox", "sandbox", "badpass"),"Login Attempt Reported failed");
+        assertTrue(
+            Utils.checkLogin(
+                props.getProperty("docbroker.host"), 
+                props.getProperty("docbroker.good.port"), 
+                props.getProperty("docbase.good.name"),
+                props.getProperty("user.name"), 
+                props.getProperty("user.good.password")),
+            "Login Attempt reported success"
+        );
+        assertFalse(Utils.checkLogin(
+            props.getProperty("docbroker.host"), 
+            props.getProperty("docbroker.good.port"), 
+            props.getProperty("docbase.good.name"),
+            props.getProperty("user.name"), 
+            props.getProperty("user.bad.password")),
+    "Login Attempt Reported failed"
+        );
     }
 
     @Test
@@ -59,14 +112,26 @@ class UtilsTest {
             assertEquals(1, exitException.status, "Must return 1 when called with no args");
             exitException = 
                 assertThrows(NoExitSecurityManager.ExitException.class, () -> {
-                    Utils.main(new String[] {"pingbroker", "ubuntu-mini", "1689"});
-                }, "Must call System.exit(int)");
+                    Utils.main(
+                        new String[] {
+                            "pingbroker", 
+                            props.getProperty("docbroker.host"),
+                            props.getProperty("docbroker.bad.port"), 
+                        });
+                    }, 
+                    "Must call System.exit(int)");
             assertEquals(1, exitException.status, "Must return 1 when called with proper number of but invalid args");
             exitException = 
-                assertThrows(NoExitSecurityManager.ExitException.class, () -> {
-                    Utils.main(new String[] {"pingbroker", "ubuntu-mini", "30189"});
-                }, "Must call System.exit(int)");
-            assertEquals(0, exitException.status, "Must return 0 when called with proper number of valid args");
+            assertThrows(NoExitSecurityManager.ExitException.class, () -> {
+                Utils.main(
+                    new String[] {
+                        "pingbroker", 
+                        props.getProperty("docbroker.host"),
+                        props.getProperty("docbroker.good.port"), 
+                    });
+                }, 
+                "Must call System.exit(int)");
+        assertEquals(0, exitException.status, "Must return 0 when called with proper number of valid args");
         }
         finally {
             System.setSecurityManager(origManager);
@@ -86,13 +151,27 @@ class UtilsTest {
             assertEquals(1, exitException.status, "Must return 1 when called with no args");
             exitException = 
                 assertThrows(NoExitSecurityManager.ExitException.class, () -> {
-                    Utils.main(new String[] {"pingdocbase", "ubuntu-mini", "30189", "badbox"});
-                }, "Must call System.exit(int)");
+                    Utils.main(
+                        new String[] {
+                            "pingdocbase", 
+                            props.getProperty("docbroker.host"), 
+                            props.getProperty("docbroker.good.port"), 
+                            props.getProperty("docbase.bad.name")
+                        });
+                }, 
+                "Must call System.exit(int)");
             assertEquals(1, exitException.status, "Must return 1 when called with proper number of but invalid args");
             exitException = 
                 assertThrows(NoExitSecurityManager.ExitException.class, () -> {
-                    Utils.main(new String[] {"pingdocbase", "ubuntu-mini", "30189", "sandbox"});
-                }, "Must call System.exit(int)");
+                    Utils.main(
+                        new String[] {
+                            "pingdocbase", 
+                            props.getProperty("docbroker.host"), 
+                            props.getProperty("docbroker.good.port"), 
+                            props.getProperty("docbase.good.name")
+                        });
+                }, 
+                "Must call System.exit(int)");
             assertEquals(0, exitException.status, "Must return 0 when called with proper number of valid args");
         }
         finally {
@@ -113,13 +192,25 @@ class UtilsTest {
             assertEquals(1, exitException.status, "Must return 1 when called with no args");
             exitException = 
                 assertThrows(NoExitSecurityManager.ExitException.class, () -> {
-                    Utils.main(new String[] {"printmap", "ubuntu-mini", "1689"});
-                }, "Must call System.exit(int)");
+                    Utils.main(
+                        new String[] {
+                            "printmap", 
+                            props.getProperty("docbroker.host"),
+                            props.getProperty("docbroker.bad.port"), 
+                        });
+                }, 
+                "Must call System.exit(int)");
             assertEquals(1, exitException.status, "Must return 1 when called with proper number of but invalid args");
             exitException = 
                 assertThrows(NoExitSecurityManager.ExitException.class, () -> {
-                    Utils.main(new String[] {"printmap", "ubuntu-mini", "30189"});
-                }, "Must call System.exit(int)");
+                    Utils.main(
+                        new String[] {
+                            "printmap", 
+                            props.getProperty("docbroker.host"),
+                            props.getProperty("docbroker.good.port"), 
+                        });
+                }, 
+                "Must call System.exit(int)");
             assertEquals(0, exitException.status, "Must return 0 when called with proper number of valid args");
         }
         finally {
