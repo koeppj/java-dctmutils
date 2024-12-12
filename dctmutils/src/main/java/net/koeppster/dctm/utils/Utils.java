@@ -3,7 +3,11 @@
  */
 package net.koeppster.dctm.utils;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Properties;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -12,6 +16,16 @@ import com.documentum.com.DfClientX;
 import com.documentum.fc.common.*;
 import com.documentum.fc.client.*;
 import com.documentum.fc.common.DfException;
+
+import net.koeppster.argparser.PropertiesStringDefault;
+import net.sourceforge.argparse4j.ArgumentParserBuilder;
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.inf.Subparser;
+import net.sourceforge.argparse4j.inf.Subparsers;
 
 public class Utils {
 
@@ -40,6 +54,7 @@ public class Utils {
         try {
             IDfDocbrokerClient client = clientx.getDocbrokerClient();
             IDfDocbaseMap map = client.getDocbaseMapFromSpecificDocbroker("tcp", host, port);
+            System.out.printf("Docbase Map for Broker %s listening on %s%n", host, port);
             for (int i=0; i<map.getDocbaseCount();i++) {
                 System.out.printf("docbase: %s%n",map.getDocbaseName(i));
                 IDfServerMap serverMap = (IDfServerMap) client.getServerMapFromSpecificDocbroker(map.getDocbaseName(i), "tcp", host, port);
@@ -85,6 +100,8 @@ public class Utils {
             return false;
         }
     }
+
+
 
     /**
      * Gets a docbroker map and checks if the given docbase is present.
@@ -150,17 +167,53 @@ public class Utils {
         stream.println("* - checklogin <host> <port> <docbase> <username> <password>             *");
         stream.println("**************************************************************************");
     }
+
     /**
      * @param args
      */
     public static void main(String[] args) {
         Configurator.setRootLevel(Level.OFF);
-        if (args.length == 0) {
-            printHelp("Must specify a command");
-            System.exit(1);
-        }
-        String cmd = args[0];
+
+        // Get the filename of the config properties file (if -c or --config is present)
         int exitCode = 0;
+        UtilsArgsParserFactory parser = new UtilsArgsParserFactory("dctmutils");
+        try {
+            Namespace ns = parser.getArguments(args);
+            String cmd = ns.getString(UtilsArgsParserFactory.ARG_CMD);
+            System.out.printf("Processing command %s%n",cmd);
+            switch (cmd) {
+                case UtilsArgsParserFactory.CMD_PINGBROKER: 
+                    exitCode = pingDocbroker(ns.getString(UtilsArgsParserFactory.ARG_HOST),
+                                             ns.getString(UtilsArgsParserFactory.ARG_PORT)) ? 0 : 1;
+                    break;
+                case UtilsArgsParserFactory.CMD_PRINTMAP: 
+                    exitCode = printBrokerMap(ns.getString(UtilsArgsParserFactory.ARG_HOST),
+                                              ns.getString(UtilsArgsParserFactory.ARG_PORT)) ? 0 : 1;
+                    break;
+                case UtilsArgsParserFactory.CMD_PINGDOCBASE: 
+                    exitCode = pingDocbase(ns.getString(UtilsArgsParserFactory.ARG_HOST),
+                                           ns.getString(UtilsArgsParserFactory.ARG_PORT),
+                                           ns.getString(UtilsArgsParserFactory.ARG_REPO)) ? 0 : 1;
+                    break;
+                case UtilsArgsParserFactory.CMD_CHECKLOGIN: 
+                    exitCode = checkLogin(ns.getString(UtilsArgsParserFactory.ARG_HOST),
+                                          ns.getString(UtilsArgsParserFactory.ARG_PORT),
+                                          ns.getString(UtilsArgsParserFactory.ARG_REPO),
+                                          ns.getString(UtilsArgsParserFactory.ARG_USER),
+                                          ns.getString(UtilsArgsParserFactory.ARG_PASS)) ? 0 : 1;
+                    break;
+            }
+        } 
+        catch (ArgumentParserException e) {
+            parser.printHelp();
+            exitCode = 1;
+        }
+        catch (IOException e) {
+            System.err.printf("Configuration File cound not be read.%n");
+            System.err.printf("Error reported:%s.%n", e.getMessage());
+            exitCode = 1;
+    }
+        /*
         switch (cmd) {
             case "pingbroker":
                 if (args.length != 3) {
@@ -207,6 +260,7 @@ public class Utils {
                 exitCode = 1;
                 break;
         }
+        */
         System.exit(exitCode);
     }
 }

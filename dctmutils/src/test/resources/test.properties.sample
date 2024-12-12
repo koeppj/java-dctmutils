@@ -3,11 +3,11 @@
 # live file test.properties, which is by design is excluded 
 # from source control
 #
-docbroker.host=ubuntu-mini
+docbroker.host=ubuntu-mini.koeppster.lan
 docbroker.good.port=30189
 docbroker.bad.port=30168
 docbase.good.name=sandbox
 docbase.bad.name=badbox
 user.name=sandbox
-user.good.password=changeme
+user.good.password=dummy
 user.bad.password=badpass
