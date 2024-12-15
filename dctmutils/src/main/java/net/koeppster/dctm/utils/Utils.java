@@ -3,264 +3,218 @@
  */
 package net.koeppster.dctm.utils;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Properties;
-
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
-
 import com.documentum.com.DfClientX;
-import com.documentum.fc.common.*;
+import com.documentum.com.IDfClientX;
 import com.documentum.fc.client.*;
+import com.documentum.fc.common.*;
 import com.documentum.fc.common.DfException;
-
-import net.koeppster.argparser.PropertiesStringDefault;
-import net.sourceforge.argparse4j.ArgumentParserBuilder;
-import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.impl.Arguments;
-import net.sourceforge.argparse4j.inf.ArgumentParser;
+import java.io.IOException;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
-import net.sourceforge.argparse4j.inf.Subparser;
-import net.sourceforge.argparse4j.inf.Subparsers;
 
 public class Utils {
 
-    /**
-     * 
-     * @param host Docbroker host
-     * @param port Docbroker port
-     * @return An array of {@link net.koeppster.dctm.utils.Docbase}.  If empty it means docbroker is
-     *         responding but no docbases are projecting to it and <code>null</code> if the docbroker 
-     *         is not reachable. 
-     */
-    static Docbase[] getBrokerMapEx(String host, String port) {
-        DfClientX clientx = new DfClientX();
-        try {
-            IDfDocbrokerClient client = clientx.getDocbrokerClient();
-            IDfDocbaseMap map = client.getDocbaseMapFromSpecificDocbroker("tcp", host, port);
-            return Docbase.getDocbases(map);
-        } catch (DfException e) {
-            System.out.printf("Error Getting Docbase Map.  Message is %s%n",e.getMessage());
-            return null;
-        }
+  static IDfClientX clientX = new DfClientX();
+
+  /**
+   * @param host Docbroker host
+   * @param port Docbroker port
+   * @return An array of {@link net.koeppster.dctm.utils.Docbase}. If empty it means docbroker is
+   *     responding but no docbases are projecting to it and <code>null</code> if the docbroker is
+   *     not reachable.
+   */
+  static Docbase[] getBrokerMapEx(DocbrokerSpec broker) {
+    try {
+      return Docbase.getDocbases(getDocbaseMap(broker));
+    } catch (DfException e) {
+      System.out.printf("Error Getting Docbase Map.  Message is %s%n", e.getMessage());
+      return null;
     }
-    
-    public static boolean printBrokerMap(String host, String port) {
-        DfClientX clientx = new DfClientX();
-        try {
-            IDfDocbrokerClient client = clientx.getDocbrokerClient();
-            IDfDocbaseMap map = client.getDocbaseMapFromSpecificDocbroker("tcp", host, port);
-            System.out.printf("Docbase Map for Broker %s listening on %s%n", host, port);
-            for (int i=0; i<map.getDocbaseCount();i++) {
-                System.out.printf("docbase: %s%n",map.getDocbaseName(i));
-                IDfServerMap serverMap = (IDfServerMap) client.getServerMapFromSpecificDocbroker(map.getDocbaseName(i), "tcp", host, port);
-                for (int j=0;j<serverMap.getServerCount();j++) {
-                    int docbasePort = Integer.parseInt(serverMap.getConnectionAddress(j)
-                        .split(" ")[2],16);
-                    System.out.printf("  server_name: %s%n",serverMap.getServerName(j)); 
-                    System.out.printf("  host_name: %s%n",serverMap.getHostName(j));
-                    System.out.printf("  addr: %s%n",serverMap.getConnectionAddress(j));
-                    if ((null != serverMap.getConnectionAddress6(j)) && (serverMap.getConnectionAddress(j).isEmpty()))
-                        System.out.printf("  addrv6: %s%n",serverMap.getConnectionAddress6(j));
-                    System.out.printf("  protocol: %s%n",serverMap.getConnectionProtocol(j));
-                    System.out.println("  # Calculated server IPV4 Address");
-                    System.out.printf("  ipv4: %s%n",serverMap.getConnectionAddress(j).split(" ")[4]);
-                    System.out.println("  # Calculated server non-secure port");
-                    System.out.printf("  port: %d%n",docbasePort);
-                }
-            }
-            return true;
-        }
-        catch (DfException e) {
-            System.err.printf("Error Printing Docbroker Map.  Message is %s%n",e.getMessage());
-            return false;
-        }
+  }
+
+  /**
+   * Returns an {@link com.documentum.fc.client.IDfDocbaseMap}.  If the host and port are supplied 
+   * then that docbroker is used.  Otherwise dfc.properties is used.
+   * @param host
+   * @param port
+   * @return
+   * @throws DfException 
+  */
+  private static IDfDocbaseMap getDocbaseMap(DocbrokerSpec broker) throws DfException {
+    if (null == broker) {
+      IDfClient client = new DfClient();
+      return client.getDocbaseMap();
+    } else {
+      IDfDocbrokerClient client = clientX.getDocbrokerClient();
+      return client.getDocbaseMapFromSpecificDocbroker("tcp", broker.getHost(), broker.getPort());
     }
+  }
 
-    /**
-     * Verifies that the given docbroker is up.
-     * 
-     * @param host
-     * @param port
-     * @return
-     */
-    public static boolean pingDocbroker(String host, String port) {
-        DfClientX client = new DfClientX();
-        try {
-            IDfTypedObject map =client.getDocbrokerClient().getDocbaseMapFromSpecificDocbroker("tcp",host,port);            
-            System.out.printf("Found docbroker at %s:%s%n",host,port);           
-            return true; 
+  private static IDfServerMap getServerMap(DocbrokerSpec broker, String docBase) throws DfException {
+    if (null == broker) {
+      IDfClient client = clientX.getLocalClient();
+      return (IDfServerMap)client.getServerMap(docBase);
+    }
+    else {
+      IDfDocbrokerClient client = clientX.getDocbrokerClient();
+      return (IDfServerMap)client.getServerMapFromSpecificDocbroker(docBase, "tcp", broker.getHost(), broker.getPort());
+    }
+  }
+
+  /**
+   * Prints a Docbroker Map. 
+   * 
+   * @param broker 
+   * @return
+   */
+  public static boolean printBrokerMap(DocbrokerSpec broker) {
+    try {
+      IDfDocbaseMap map = getDocbaseMap(broker);
+      // System.out.printf("Docbase Map for Broker %s listening on %s%n", broker.getHost(), broker.getPort());
+      for (int i = 0; i < map.getDocbaseCount(); i++) {
+        System.out.printf("docbase: %s%n", map.getDocbaseName(i));
+        IDfServerMap serverMap = getServerMap(broker, map.getDocbaseName(i));
+        for (int j = 0; j < serverMap.getServerCount(); j++) {
+          int docbasePort = Integer.parseInt(serverMap.getConnectionAddress(j).split(" ")[2], 16);
+          System.out.printf("  server_name: %s%n", serverMap.getServerName(j));
+          System.out.printf("  host_name: %s%n", serverMap.getHostName(j));
+          System.out.printf("  addr: %s%n", serverMap.getConnectionAddress(j));
+          if ((null != serverMap.getConnectionAddress6(j))
+              && (serverMap.getConnectionAddress(j).isEmpty()))
+            System.out.printf("  addrv6: %s%n", serverMap.getConnectionAddress6(j));
+          System.out.printf("  protocol: %s%n", serverMap.getConnectionProtocol(j));
+          System.out.println("  # Calculated server IPV4 Address");
+          System.out.printf("  ipv4: %s%n", serverMap.getConnectionAddress(j).split(" ")[4]);
+          System.out.println("  # Calculated server non-secure port");
+          System.out.printf("  port: %d%n", docbasePort);
         }
-        catch (DfException e) {
-            System.err.printf("No docbroker at %s:%s, Error is %s%n", host, port, e.getMessage());
-            return false;
-        }
+      }
+      return true;
+    } catch (DfException e) {
+      System.err.printf("Error Printing Docbroker Map.  Message is %s%n", e.getMessage());
+      return false;
     }
+  }
 
-
-
-    /**
-     * Gets a docbroker map and checks if the given docbase is present.
-     * 
-     * @param host
-     * @param port
-     * @param docbase
-     * @return
-     */
-    public static boolean pingDocbase(String host, String port, String docbase) {
-        DfClientX client = new DfClientX();
-        try {
-            IDfServerMap map = (IDfServerMap) client.getDocbrokerClient().getServerMapFromSpecificDocbroker(docbase,"tcp",host,port);            
-            System.out.printf("Found docbase %s at %s:%s%n",docbase,host,port);           
-            return true; 
-        }
-        catch (DfException e) {
-            System.err.printf("Docbase %s not known to %s:%s, Error is %s%n",docbase, host, port, e.getMessage());
-            return false;
-        }
+  /**
+   * Verifies that the given docbroker is up.
+   *
+   * @param host
+   * @param port
+   * @return
+   */
+  public static boolean pingDocbroker(DocbrokerSpec broker) {
+    DfClientX client = new DfClientX();
+    try {
+      IDfTypedObject map =
+          client.getDocbrokerClient().getDocbaseMapFromSpecificDocbroker("tcp", broker.getHost(), broker.getPort());
+      System.out.printf("Found docbroker at %s:%s%n", broker.getHost(), broker.getPort());
+      return true;
+    } catch (DfException e) {
+      System.err.printf("No docbroker at %s:%s, Error is %s%n", broker.getHost(), broker.getPort(), e.getMessage());
+      return false;
     }
+  }
 
-    public static boolean checkLogin(String host, String port, 
-                           String docBase, String username, String password) {
-        try {
-            IDfClient client = DfClient.getInstance();
-            client.getClientConfig().setString("primary_host",host);
-            client.getClientConfig().setString("primary_port",port);
-            IDfLoginInfo li = new DfLoginInfo();
-            li.setUser(username);
-            li.setPassword(password);
-            client.authenticate(docBase, li);
-            System.out.printf("Authenticated to docbase %s with user %s%n",docBase,username);
-            return true;
-        } catch (DfException e) {
-            System.err.printf("Error authenticating.  Message is %s%n",e.getMessage());
-            return false;
-        }
+  /**
+   * Gets a docbroker map and checks if the given docbase is present.
+   *
+   * @param host
+   * @param port
+   * @param docbase
+   * @return
+   */
+  public static boolean pingDocbase(DocbrokerSpec broker, String docbase) {
+    DfClientX client = new DfClientX();
+    try {
+      IDfServerMap map =
+          (IDfServerMap)
+              client
+                  .getDocbrokerClient()
+                  .getServerMapFromSpecificDocbroker(docbase, "tcp", broker.getHost(), broker.getPort());
+      System.out.printf("Found docbase %s at %s:%s%n", docbase, broker.getHost(), broker.getPort());
+      return true;
+    } catch (DfException e) {
+      System.err.printf(
+          "Docbase %s not known to %s:%s, Error is %s%n", docbase, broker.getHost(), broker.getPort(), e.getMessage());
+      return false;
     }
+  }
 
-    static void printHelp() {
-        printHelp(System.err);
+  public static boolean checkLogin(
+      DocbrokerSpec broker, String docBase, String username, String password) {
+    try {
+      IDfClient client = DfClient.getInstance();
+      client.getClientConfig().setString("primary_host", broker.getHost());
+      client.getClientConfig().setString("primary_port", broker.getPort());
+      IDfLoginInfo li = new DfLoginInfo();
+      li.setUser(username);
+      li.setPassword(password);
+      client.authenticate(docBase, li);
+      System.out.printf("Authenticated to docbase %s with user %s%n", docBase, username);
+      return true;
+    } catch (DfException e) {
+      System.err.printf("Error authenticating.  Message is %s%n", e.getMessage());
+      return false;
     }
+  }
 
-    static void printHelp(String errorPrefix) {
-        System.err.printf("Command Error: %s%n",errorPrefix);
-        printHelp(System.err);
+  /**
+   * @param args
+   */
+  public static void main(String[] args) {
+    //Configurator.setRootLevel(Level.OFF);
+    int exitCode = 0;
+    UtilsArgsParserFactory parser = new UtilsArgsParserFactory("dctmutils");
+    try {
+      Namespace ns = parser.getArguments(args);
+      String cmd = ns.getString(UtilsArgsParserFactory.ARG_CMD);
+      System.out.printf("Processing command %s%n", cmd);
+      switch (cmd) {
+        case UtilsArgsParserFactory.CMD_PINGBROKER:
+          exitCode =
+              pingDocbroker(ns.get(UtilsArgsParserFactory.ARG_HOST))
+                  ? 0
+                  : 1;
+          break;
+        case UtilsArgsParserFactory.CMD_PRINTMAP:
+          exitCode =
+              printBrokerMap(ns.get(UtilsArgsParserFactory.ARG_HOST))
+                ? 0
+                  : 1;
+          break;
+        case UtilsArgsParserFactory.CMD_PINGDOCBASE:
+          exitCode =
+              pingDocbase(
+                ns.get(UtilsArgsParserFactory.ARG_HOST),
+                ns.getString(UtilsArgsParserFactory.ARG_REPO))
+                  ? 0
+                  : 1;
+          break;
+        case UtilsArgsParserFactory.CMD_CHECKLOGIN:
+          exitCode =
+              checkLogin(
+                ns.get(UtilsArgsParserFactory.ARG_HOST),
+                ns.getString(UtilsArgsParserFactory.ARG_REPO),
+                      ns.getString(UtilsArgsParserFactory.ARG_USER),
+                      ns.getString(UtilsArgsParserFactory.ARG_PASS))
+                  ? 0
+                  : 1;
+          break;
+      }
+    } catch (ArgumentParserException e) {
+      DfLogger.error(Utils.class, "Failed to parse arguments.  Error {0}", new String[] {e.getMessage()}, e);
+      System.err.println(e.getMessage());
+      exitCode = 1;
+    } catch (IOException e) {
+      DfLogger.error(Utils.class, "Failed to open file.  Error {0}", new String[] {e.getMessage()}, e);
+      System.err.printf("Configuration File cound not be read.%n");
+      System.err.printf("Error reported:%s.%n", e.getMessage());
+      exitCode = 1;
+    } catch (Throwable t) {
+      DfLogger.fatal(Utils.class, "Unexpected error {0}", new String[] {t.getMessage()}, t);
+      System.err.printf("Unexpected error %s%n", t.getMessage());
     }
-
-    static void printHelp(PrintStream stream ) {
-        stream.println("************************ Simple Documentum Ping Utils ********************");
-        stream.println("* Simple commands to check availbiity of docbrokers and docbases.  Great  ");
-        stream.println("* for checking out docbroker and docbase connectivity and health and for *");
-        stream.println("* getting docbase and server map printouts.                              *");
-        stream.println("*                                                                        *");
-        stream.println("* Each of the following commands print an informational message about    *");
-        stream.println("* success or failure and exit the jvm with 0 if success or 1 the         *");
-        stream.println("* opertation fails.                                                      *");
-        stream.println("*                                                                        *");
-        stream.println("* - pingbroker <host> <port>                                             *");
-        stream.println("* - printmap <host> <port>                                               *");
-        stream.println("* - pingdocbase <host> <port> <docbase>                                  *");
-        stream.println("* - checklogin <host> <port> <docbase> <username> <password>             *");
-        stream.println("**************************************************************************");
-    }
-
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        Configurator.setRootLevel(Level.OFF);
-
-        // Get the filename of the config properties file (if -c or --config is present)
-        int exitCode = 0;
-        UtilsArgsParserFactory parser = new UtilsArgsParserFactory("dctmutils");
-        try {
-            Namespace ns = parser.getArguments(args);
-            String cmd = ns.getString(UtilsArgsParserFactory.ARG_CMD);
-            System.out.printf("Processing command %s%n",cmd);
-            switch (cmd) {
-                case UtilsArgsParserFactory.CMD_PINGBROKER: 
-                    exitCode = pingDocbroker(ns.getString(UtilsArgsParserFactory.ARG_HOST),
-                                             ns.getString(UtilsArgsParserFactory.ARG_PORT)) ? 0 : 1;
-                    break;
-                case UtilsArgsParserFactory.CMD_PRINTMAP: 
-                    exitCode = printBrokerMap(ns.getString(UtilsArgsParserFactory.ARG_HOST),
-                                              ns.getString(UtilsArgsParserFactory.ARG_PORT)) ? 0 : 1;
-                    break;
-                case UtilsArgsParserFactory.CMD_PINGDOCBASE: 
-                    exitCode = pingDocbase(ns.getString(UtilsArgsParserFactory.ARG_HOST),
-                                           ns.getString(UtilsArgsParserFactory.ARG_PORT),
-                                           ns.getString(UtilsArgsParserFactory.ARG_REPO)) ? 0 : 1;
-                    break;
-                case UtilsArgsParserFactory.CMD_CHECKLOGIN: 
-                    exitCode = checkLogin(ns.getString(UtilsArgsParserFactory.ARG_HOST),
-                                          ns.getString(UtilsArgsParserFactory.ARG_PORT),
-                                          ns.getString(UtilsArgsParserFactory.ARG_REPO),
-                                          ns.getString(UtilsArgsParserFactory.ARG_USER),
-                                          ns.getString(UtilsArgsParserFactory.ARG_PASS)) ? 0 : 1;
-                    break;
-            }
-        } 
-        catch (ArgumentParserException e) {
-            parser.printHelp();
-            exitCode = 1;
-        }
-        catch (IOException e) {
-            System.err.printf("Configuration File cound not be read.%n");
-            System.err.printf("Error reported:%s.%n", e.getMessage());
-            exitCode = 1;
-    }
-        /*
-        switch (cmd) {
-            case "pingbroker":
-                if (args.length != 3) {
-                    printHelp("Expecting <host> <port>");
-                    exitCode = 1;
-                }
-                else {
-                    exitCode = pingDocbroker(args[1], args[2]) ? 0 : 1;                
-                }
-                break;
-        
-            case "pingdocbase":
-                if (args.length != 4) {
-                    printHelp("Expecting <host> <port> <docbase>");
-                    exitCode = 1;
-                }
-                else {
-                    exitCode = pingDocbase(args[1], args[2], args[3]) ? 0 : 1;
-                }
-                break;
-
-            case "printmap":
-                if (args.length != 3) {
-                    printHelp("Expecting <host> <port>");
-                    exitCode = 1;
-                }
-                else {
-                    exitCode = printBrokerMap(args[1], args[2]) ? 0 : 1;                
-                }
-                break;
-
-            case "checklogin":
-                if (args.length != 6) {
-                    printHelp("Expecting <host> <port> <docbase> <username> <password>");
-                    exitCode = 1;
-                }
-                else {
-                    exitCode = checkLogin(args[1], args[2], args[3], args[4], args[5]) ? 0 : 1;                
-                }
-                break;
-
-            default:
-                printHelp("Expending one of pingbroker, pingdocbase, printmap, checklogin");
-                exitCode = 1;
-                break;
-        }
-        */
-        System.exit(exitCode);
-    }
+    System.exit(exitCode);
+  }
 }

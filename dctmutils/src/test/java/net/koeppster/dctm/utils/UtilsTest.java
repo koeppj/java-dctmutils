@@ -29,13 +29,15 @@ class UtilsTest {
     @Test
     void checkPingBroker() {
         assertTrue(
-            Utils.pingDocbroker(props.getProperty("docbroker.host"),
-                                props.getProperty("docbroker.good.port")),
+            Utils.pingDocbroker(new DocbrokerSpec(
+                                props.getProperty("docbroker.host"),
+                                props.getProperty("docbroker.good.port"))
+                                ),
     "Operating Docbroker Reported Up"
         );
         assertFalse(
-            Utils.pingDocbroker(props.getProperty("docbroker.host"),
-                                props.getProperty("docbroker.bad.port")),
+            Utils.pingDocbroker(new DocbrokerSpec(props.getProperty("docbroker.host"),
+                                props.getProperty("docbroker.bad.port"))),
     "Check via invalid port reported down"
         );
     }
@@ -43,17 +45,17 @@ class UtilsTest {
     @Test
     void checkPingDocbase() {
         assertTrue(
-            Utils.pingDocbase(
+            Utils.pingDocbase(new DocbrokerSpec(
                 props.getProperty("docbroker.host"), 
-                props.getProperty("docbroker.good.port"), 
+                props.getProperty("docbroker.good.port")), 
                 props.getProperty("docbase.good.name")
             ),
             "Operating docbase reported up"
         );
         assertFalse(
-            Utils.pingDocbase(
+            Utils.pingDocbase(new DocbrokerSpec(
                 props.getProperty("docbroker.host"),
-                props.getProperty("docbroker.good.port"), 
+                props.getProperty("docbroker.good.port")), 
                 props.getProperty("docbase.bad.name")
             ),
             "Invalid docbase reported unavailable"
@@ -63,17 +65,17 @@ class UtilsTest {
     @Test
     void checkCheckLogin() {
         assertTrue(
-            Utils.checkLogin(
+            Utils.checkLogin(new DocbrokerSpec(
                 props.getProperty("docbroker.host"), 
-                props.getProperty("docbroker.good.port"), 
+                props.getProperty("docbroker.good.port")), 
                 props.getProperty("docbase.good.name"),
                 props.getProperty("user.name"), 
                 props.getProperty("user.good.password")),
             "Login Attempt reported success"
         );
-        assertFalse(Utils.checkLogin(
+        assertFalse(Utils.checkLogin(new DocbrokerSpec(
             props.getProperty("docbroker.host"), 
-            props.getProperty("docbroker.good.port"), 
+            props.getProperty("docbroker.good.port")), 
             props.getProperty("docbase.good.name"),
             props.getProperty("user.name"), 
             props.getProperty("user.bad.password")),
