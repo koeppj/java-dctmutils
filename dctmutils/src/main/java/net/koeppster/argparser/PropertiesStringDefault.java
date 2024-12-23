@@ -2,6 +2,7 @@ package net.koeppster.argparser;
 
 import java.util.Properties;
 import net.sourceforge.argparse4j.inf.Argument;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
 
 
 public class PropertiesStringDefault {
@@ -33,7 +34,7 @@ public class PropertiesStringDefault {
      * that matches the argument name
      */
     @Override
-    public String toString() {
+    public String toString()  {
         return defaultProps.getProperty(parentArg.getDest());
     }
 

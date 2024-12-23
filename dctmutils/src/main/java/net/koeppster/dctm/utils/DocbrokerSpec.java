@@ -43,10 +43,17 @@ public class DocbrokerSpec extends Object implements ArgumentType<DocbrokerSpec>
   }
 
   public DocbrokerSpec() {
-    
+  }
+
+  public DocbrokerSpec(String arg) {
+    this.convert(arg);
   }
 
   public String toString() {
     return (null == host) ? null : host.concat(":").concat(port);
+  }
+
+  public static DocbrokerSpec valueOf(String arg) {
+    return new DocbrokerSpec(arg);
   }
 }

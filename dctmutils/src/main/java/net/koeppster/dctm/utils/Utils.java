@@ -3,161 +3,14 @@
  */
 package net.koeppster.dctm.utils;
 
-import com.documentum.com.DfClientX;
-import com.documentum.com.IDfClientX;
-import com.documentum.fc.client.*;
 import com.documentum.fc.common.*;
-import com.documentum.fc.common.DfException;
-import java.io.IOException;
+
+import java.io.File;
+
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class Utils {
-
-  static IDfClientX clientX = new DfClientX();
-
-  /**
-   * @param host Docbroker host
-   * @param port Docbroker port
-   * @return An array of {@link net.koeppster.dctm.utils.Docbase}. If empty it means docbroker is
-   *     responding but no docbases are projecting to it and <code>null</code> if the docbroker is
-   *     not reachable.
-   */
-  static Docbase[] getBrokerMapEx(DocbrokerSpec broker) {
-    try {
-      return Docbase.getDocbases(getDocbaseMap(broker));
-    } catch (DfException e) {
-      System.out.printf("Error Getting Docbase Map.  Message is %s%n", e.getMessage());
-      return null;
-    }
-  }
-
-  /**
-   * Returns an {@link com.documentum.fc.client.IDfDocbaseMap}.  If the host and port are supplied 
-   * then that docbroker is used.  Otherwise dfc.properties is used.
-   * @param host
-   * @param port
-   * @return
-   * @throws DfException 
-  */
-  private static IDfDocbaseMap getDocbaseMap(DocbrokerSpec broker) throws DfException {
-    if (null == broker) {
-      IDfClient client = new DfClient();
-      return client.getDocbaseMap();
-    } else {
-      IDfDocbrokerClient client = clientX.getDocbrokerClient();
-      return client.getDocbaseMapFromSpecificDocbroker("tcp", broker.getHost(), broker.getPort());
-    }
-  }
-
-  private static IDfServerMap getServerMap(DocbrokerSpec broker, String docBase) throws DfException {
-    if (null == broker) {
-      IDfClient client = clientX.getLocalClient();
-      return (IDfServerMap)client.getServerMap(docBase);
-    }
-    else {
-      IDfDocbrokerClient client = clientX.getDocbrokerClient();
-      return (IDfServerMap)client.getServerMapFromSpecificDocbroker(docBase, "tcp", broker.getHost(), broker.getPort());
-    }
-  }
-
-  /**
-   * Prints a Docbroker Map. 
-   * 
-   * @param broker 
-   * @return
-   */
-  public static boolean printBrokerMap(DocbrokerSpec broker) {
-    try {
-      IDfDocbaseMap map = getDocbaseMap(broker);
-      // System.out.printf("Docbase Map for Broker %s listening on %s%n", broker.getHost(), broker.getPort());
-      for (int i = 0; i < map.getDocbaseCount(); i++) {
-        System.out.printf("docbase: %s%n", map.getDocbaseName(i));
-        IDfServerMap serverMap = getServerMap(broker, map.getDocbaseName(i));
-        for (int j = 0; j < serverMap.getServerCount(); j++) {
-          int docbasePort = Integer.parseInt(serverMap.getConnectionAddress(j).split(" ")[2], 16);
-          System.out.printf("  server_name: %s%n", serverMap.getServerName(j));
-          System.out.printf("  host_name: %s%n", serverMap.getHostName(j));
-          System.out.printf("  addr: %s%n", serverMap.getConnectionAddress(j));
-          if ((null != serverMap.getConnectionAddress6(j))
-              && (serverMap.getConnectionAddress(j).isEmpty()))
-            System.out.printf("  addrv6: %s%n", serverMap.getConnectionAddress6(j));
-          System.out.printf("  protocol: %s%n", serverMap.getConnectionProtocol(j));
-          System.out.println("  # Calculated server IPV4 Address");
-          System.out.printf("  ipv4: %s%n", serverMap.getConnectionAddress(j).split(" ")[4]);
-          System.out.println("  # Calculated server non-secure port");
-          System.out.printf("  port: %d%n", docbasePort);
-        }
-      }
-      return true;
-    } catch (DfException e) {
-      System.err.printf("Error Printing Docbroker Map.  Message is %s%n", e.getMessage());
-      return false;
-    }
-  }
-
-  /**
-   * Verifies that the given docbroker is up.
-   *
-   * @param host
-   * @param port
-   * @return
-   */
-  public static boolean pingDocbroker(DocbrokerSpec broker) {
-    DfClientX client = new DfClientX();
-    try {
-      IDfTypedObject map =
-          client.getDocbrokerClient().getDocbaseMapFromSpecificDocbroker("tcp", broker.getHost(), broker.getPort());
-      System.out.printf("Found docbroker at %s:%s%n", broker.getHost(), broker.getPort());
-      return true;
-    } catch (DfException e) {
-      System.err.printf("No docbroker at %s:%s, Error is %s%n", broker.getHost(), broker.getPort(), e.getMessage());
-      return false;
-    }
-  }
-
-  /**
-   * Gets a docbroker map and checks if the given docbase is present.
-   *
-   * @param host
-   * @param port
-   * @param docbase
-   * @return
-   */
-  public static boolean pingDocbase(DocbrokerSpec broker, String docbase) {
-    DfClientX client = new DfClientX();
-    try {
-      IDfServerMap map =
-          (IDfServerMap)
-              client
-                  .getDocbrokerClient()
-                  .getServerMapFromSpecificDocbroker(docbase, "tcp", broker.getHost(), broker.getPort());
-      System.out.printf("Found docbase %s at %s:%s%n", docbase, broker.getHost(), broker.getPort());
-      return true;
-    } catch (DfException e) {
-      System.err.printf(
-          "Docbase %s not known to %s:%s, Error is %s%n", docbase, broker.getHost(), broker.getPort(), e.getMessage());
-      return false;
-    }
-  }
-
-  public static boolean checkLogin(
-      DocbrokerSpec broker, String docBase, String username, String password) {
-    try {
-      IDfClient client = DfClient.getInstance();
-      client.getClientConfig().setString("primary_host", broker.getHost());
-      client.getClientConfig().setString("primary_port", broker.getPort());
-      IDfLoginInfo li = new DfLoginInfo();
-      li.setUser(username);
-      li.setPassword(password);
-      client.authenticate(docBase, li);
-      System.out.printf("Authenticated to docbase %s with user %s%n", docBase, username);
-      return true;
-    } catch (DfException e) {
-      System.err.printf("Error authenticating.  Message is %s%n", e.getMessage());
-      return false;
-    }
-  }
 
   /**
    * @param args
@@ -165,48 +18,20 @@ public class Utils {
   public static void main(String[] args) {
     //Configurator.setRootLevel(Level.OFF);
     int exitCode = 0;
-    UtilsArgsParserFactory parser = new UtilsArgsParserFactory("dctmutils");
     try {
+      File configFile = findConfigFile(args);
+      UtilsArgsParserFactory parser = new UtilsArgsParserFactory("dctmutils", configFile);
       Namespace ns = parser.getArguments(args);
-      String cmd = ns.getString(UtilsArgsParserFactory.ARG_CMD);
-      System.out.printf("Processing command %s%n", cmd);
-      switch (cmd) {
-        case UtilsArgsParserFactory.CMD_PINGBROKER:
-          exitCode =
-              pingDocbroker(ns.get(UtilsArgsParserFactory.ARG_HOST))
-                  ? 0
-                  : 1;
-          break;
-        case UtilsArgsParserFactory.CMD_PRINTMAP:
-          exitCode =
-              printBrokerMap(ns.get(UtilsArgsParserFactory.ARG_HOST))
-                ? 0
-                  : 1;
-          break;
-        case UtilsArgsParserFactory.CMD_PINGDOCBASE:
-          exitCode =
-              pingDocbase(
-                ns.get(UtilsArgsParserFactory.ARG_HOST),
-                ns.getString(UtilsArgsParserFactory.ARG_REPO))
-                  ? 0
-                  : 1;
-          break;
-        case UtilsArgsParserFactory.CMD_CHECKLOGIN:
-          exitCode =
-              checkLogin(
-                ns.get(UtilsArgsParserFactory.ARG_HOST),
-                ns.getString(UtilsArgsParserFactory.ARG_REPO),
-                      ns.getString(UtilsArgsParserFactory.ARG_USER),
-                      ns.getString(UtilsArgsParserFactory.ARG_PASS))
-                  ? 0
-                  : 1;
-          break;
-      }
+      ((UtilsFunction) ns.get("func")).execute(ns);
     } catch (ArgumentParserException e) {
       DfLogger.error(Utils.class, "Failed to parse arguments.  Error {0}", new String[] {e.getMessage()}, e);
       System.err.println(e.getMessage());
       exitCode = 1;
-    } catch (IOException e) {
+    } catch (UtilsException e) {
+      DfLogger.error(Utils.class, "Failed to execute command.  Error {0}", new String[] {e.getMessage()}, e);
+      System.err.println(e.getMessage());
+      exitCode = 1;
+    } catch (IllegalArgumentException e) {
       DfLogger.error(Utils.class, "Failed to open file.  Error {0}", new String[] {e.getMessage()}, e);
       System.err.printf("Configuration File cound not be read.%n");
       System.err.printf("Error reported:%s.%n", e.getMessage());
@@ -214,7 +39,34 @@ public class Utils {
     } catch (Throwable t) {
       DfLogger.fatal(Utils.class, "Unexpected error {0}", new String[] {t.getMessage()}, t);
       System.err.printf("Unexpected error %s%n", t.getMessage());
-    }
+      exitCode = 1;
+    } 
     System.exit(exitCode);
+  }
+
+  private static File findConfigFile(String[] args) {
+      // Loop through the array of strings
+      for (int i = 0; i < args.length; i++) {
+          // Check for '-c' or '--config'
+          if ("-c".equals(args[i]) || "--config".equals(args[i])) {
+              // Ensure there is a next element in the array
+              if (i + 1 < args.length) {
+                  // Get the next element which should be the file path
+                  File configFile = new File(args[i + 1]);
+  
+                  // Check if the file exists and is readable
+                  if (configFile.exists() && configFile.canRead()) {
+                      return configFile; // Return the valid file
+                  } else {
+                      throw new IllegalArgumentException("File cannot be read: " + args[i + 1]);
+                  }
+              } else {
+                  throw new IllegalArgumentException("No file path provided after '-c' or '--config'");
+              }
+          }
+      }
+      
+      // Return null if no '-c' or '--config' element is found
+      return null;
   }
 }

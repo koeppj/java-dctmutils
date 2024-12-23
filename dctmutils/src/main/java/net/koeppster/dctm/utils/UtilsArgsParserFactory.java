@@ -1,28 +1,26 @@
 package net.koeppster.dctm.utils;
 
+import com.documentum.fc.common.DfLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.Properties;
-
-import com.documentum.fc.common.DfLogger;
-
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.impl.type.ReflectArgumentType;
 import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.ArgumentType;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import net.sourceforge.argparse4j.inf.Subparsers;
 
 public class UtilsArgsParserFactory {
 
-  private HashMap<String, ArgType> stdArgTypes = new HashMap<String, ArgType>();
   private ArgumentParser parser;
   private Subparsers subParsers;
   private Properties defaultsProps = new Properties();
@@ -48,126 +46,174 @@ public class UtilsArgsParserFactory {
     Namespace ns = parser.parseArgs(args);
     if (null != ns.get(ARG_CONFIG)) {
       File configFile = (File) ns.get(ARG_CONFIG);
-      DfLogger.debug(this, "Loading Config from file {0}", new String[] {configFile.getAbsolutePath()}, null);
-      System.out.printf("Using config file %s to load defaults%n",configFile.getAbsolutePath());
+      DfLogger.debug(
+          this, "Loading Config from file {0}", new String[] {configFile.getAbsolutePath()}, null);
+      System.out.printf("Using config file %s to load defaults%n", configFile.getAbsolutePath());
       this.defaultsProps.load(new FileInputStream(configFile));
       return parser.parseArgs(args);
     }
     return ns;
   }
 
-  private void addConfigArg() {
-    ArgType configArgType = stdArgTypes.get(ARG_CONFIG);
-    parser
-        .addArgument(configArgType.getargNames())
-        .dest(ARG_CONFIG)
-        .help(configArgType.getHelpText())
-        .type(Arguments.fileType().verifyCanRead().verifyExists());
+  private void addConfigArg() throws ArgumentParserException {
+    addArgument(
+        parser,
+        new String[] {"-c", "--config"},
+        ARG_CONFIG,
+        "Properties file containing defaults",
+        false,
+        Arguments.fileType().verifyCanRead().verifyExists());
+  }
+
+  void addHostArg(ArgumentParser arg0, boolean required) throws ArgumentParserException {
+    addArgument(
+        arg0,
+        new String[] {"-b", "--broker"},
+        ARG_HOST,
+        "Docbroker (will use dfc.properties of not specifed)",
+        required,
+        DocbrokerSpec.class);
   }
 
   /**
-   * @param parser
-   * @param argName
-   * @return
+   * Adds an argument to the given ArgumentParser.  If dest is found in the defaultsProps, then the
+   * value of the corresponding key is used as the default and <code>arg0.required(false) is called</codee>.
+   *
+   * @param arg0 The ArgumentParser to which the argument will be added.
+   * @param argNames An array of strings representing the names of the argument.
+   * @param dest The destination variable where the argument value will be stored.
+   * @param helpText The help text describing the argument.
+   * @param required A boolean indicating whether the argument is required.
    */
-  private Argument addSDtdArgument(ArgumentParser parser, String argName) {
-    ArgType argType = stdArgTypes.get(argName);
-    @SuppressWarnings("unchecked")
-    Argument newArg =
-        parser
-            .addArgument(argType.getargNames())
-            .dest(argName)
-            .help(argType.getHelpText())
-            .type(argType.getArgType());
-    return newArg;
+  void addArgument(
+      ArgumentParser arg0, String[] argNames, String dest, String helpText, boolean required) {
+    arg0.addArgument(argNames)
+        .dest(dest)
+        .help(helpText)
+        .required((defaultsProps.getProperty(dest) == null) ? required : false)
+        .setDefault(
+            (defaultsProps.getProperty(dest) == null) ? null : defaultsProps.getProperty(dest));
   }
 
-  private Argument addHostArg(ArgumentParser arg0) {
-    return addSDtdArgument(arg0, ARG_HOST).type(new DocbrokerSpec());
+  void addArgument(
+      ArgumentParser arg0,
+      String[] argNames,
+      String dest,
+      String helpText,
+      boolean required,
+      Class<?> argType)
+      throws ArgumentParserException {
+    Argument arg =
+        arg0.addArgument(argNames)
+            .dest(dest)
+            .help(helpText)
+            .required((defaultsProps.getProperty(dest) == null) ? required : false)
+            .type(argType);
+    if (defaultsProps.getProperty(dest) != null) {
+      arg.setDefault(
+          (defaultsProps.getProperty(dest) == null)
+              ? null
+              : new ReflectArgumentType<>(argType)
+                  .convert(arg0, arg, defaultsProps.getProperty(dest)));
+    }
   }
 
-  private Argument addRepoArg(ArgumentParser arg0) {
-    return addSDtdArgument(arg0, ARG_REPO);
+  <T> void addArgument(
+      ArgumentParser arg0,
+      String[] argNames,
+      String dest,
+      String helpText,
+      boolean required,
+      ArgumentType<T> argType)
+      throws ArgumentParserException {
+    Argument arg =
+        arg0.addArgument(argNames)
+            .dest(dest)
+            .help(helpText)
+            .required((defaultsProps.getProperty(dest) == null) ? required : false)
+            .type(argType);
+    if (defaultsProps.getProperty(dest) != null) {
+      arg.setDefault(
+          (defaultsProps.getProperty(dest) == null)
+              ? null
+              : argType.convert(arg0, arg, defaultsProps.getProperty(dest)));
+    }
   }
 
-  private Argument addUserArg(ArgumentParser arg0) {
-    return addSDtdArgument(arg0, ARG_USER);
+  void addRepoArg(ArgumentParser arg0) {
+    DfLogger.debug(this, "Adding Repo Argument", null, null);
+    addArgument(arg0, new String[] {"-r", "--repo"}, ARG_REPO, "Repository Name", true);
   }
 
-  private Argument addPasswordArg(ArgumentParser arg0) {
-    return addSDtdArgument(arg0, ARG_PASS);
+  void addUserArg(ArgumentParser arg0) {
+    DfLogger.debug(this, "Adding User Argument", null, null);
+    addArgument(arg0, new String[] {"-u", "--user"}, ARG_USER, "Repository User Name", true);
+  }
+
+  void addPasswordArg(ArgumentParser arg0) {
+    DfLogger.debug(this, "Adding Password Argument", null, null);
+    addArgument(arg0, new String[] {"-p", "--password"}, ARG_PASS, "Repository Password", true);
   }
 
   //
   // Add the Subpaesers
   //
-  private void addPingBrokerCmd() {
-    Subparser pingBrokerCmds = subParsers.addParser(CMD_PINGBROKER).help("Ping Docbroker");
-    addHostArg(pingBrokerCmds).required(true);
+  void addPingBrokerCmd() throws ArgumentParserException {
+    Subparser pingBrokerCmds = subParsers.addParser(CMD_PINGBROKER).help("Ping Docbroker").setDefault("func", new PingBrokerCmd());
+    addHostArg(pingBrokerCmds, true);
   }
 
-  private void addPrintMapCmd() {
-    Subparser pingBrokerCmds = subParsers.addParser(CMD_PRINTMAP).help("Print Docbroker Map");
-    addHostArg(pingBrokerCmds).required(false);
+  void addPrintMapCmd() throws ArgumentParserException {
+    Subparser pingBrokerCmds = subParsers.addParser(CMD_PRINTMAP).help("Print Docbroker Map").setDefault("func", new PrintMapCmd());
+    addHostArg(pingBrokerCmds, false);
   }
 
-  private void addPingDocbaseCmd() {
-    Subparser cmd = subParsers.addParser(CMD_PINGDOCBASE).help("Ping Docbase");
-    addHostArg(cmd).required(true);
-    addRepoArg(cmd).required(true);
+  void addPingDocbaseCmd() throws ArgumentParserException {
+    Subparser cmd = subParsers.addParser(CMD_PINGDOCBASE).help("Ping Docbase").setDefault("func", new PIngDocbaseCmd());
+    addHostArg(cmd, false);
+    addRepoArg(cmd);
   }
 
-  private void addCheckLoginCmd() {
-    Subparser cmd = subParsers.addParser(CMD_CHECKLOGIN).help("Check Login");
-    addHostArg(cmd).required(true);
-    addRepoArg(cmd).required(true);
-    addUserArg(cmd).required(true);
-    addPasswordArg(cmd).required(true);
+  void addCheckLoginCmd() throws ArgumentParserException {
+    Subparser cmd = subParsers.addParser(CMD_CHECKLOGIN).help("Check Login").setDefault("func", new CheckLoginCmd());
+    addHostArg(cmd, false);
+    addRepoArg(cmd);
+    addUserArg(cmd);
+    addPasswordArg(cmd);
   }
 
-  private void addExportCmd() {
-    Subparser cmd = subParsers.addParser(CMD_EXPORT).help("Export Objects");
-    addHostArg(cmd).required(false);
-    addRepoArg(cmd).required(true);
-    addUserArg(cmd).required(true);
-    addPasswordArg(cmd).required(true);
-  }
-
-  private void fillAllStdArgs(Properties props) {
-    stdArgTypes.put(
-        ARG_HOST,
-        new ArgType(new String[] {"-b", "--broker"}, "Docborker Host and Port (<hostname or IP>[:<port>])", null, props));
-    stdArgTypes.put(
-        ARG_REPO, new ArgType(new String[] {"-r", "--repo"}, "Repository", null, props));
-    stdArgTypes.put(ARG_USER, new ArgType(new String[] {"-u", "--user"}, "User Name", null, props));
-    stdArgTypes.put(ARG_PASS, new ArgType(new String[] {"-p","--password"}, "Password", null, props));
-    stdArgTypes.put(
-        ARG_CONFIG,
-        new ArgType(
-            new String[] {"-c", "--config"},
-            "Config File",
-            "Properties file containing key value pairs for defaults",
-            props));
+  void addExportCmd() throws ArgumentParserException {
+    Subparser cmd = subParsers.addParser(CMD_EXPORT).help("Export Objects").setDefault("func", new ExportCmd());
+    addHostArg(cmd, false);
+    addRepoArg(cmd);
+    addUserArg(cmd);
+    addPasswordArg(cmd);
   }
 
   /**
    * Constructor for Utilities Argument Parser
    *
-   * @param prog The name of the Arg Parset
-   * @param args The command link args.
+   * @param prog The name of the Arg Parser
+   * @param propsFile The @{link File} containing the default properties. If null, no defaults are
+   *     loaded.
+   * @throws ArgumentParserException
    */
-  public UtilsArgsParserFactory(String prog) {
+  public UtilsArgsParserFactory(String prog, File propsFile)
+      throws FileNotFoundException, IOException, ArgumentParserException {
     DfLogger.debug(this, "Entering UtilsArgParserFactory", null, null);
 
-    this.parser = ArgumentParsers.newFor(prog).build();
+    if (null != propsFile) {
+      DfLogger.debug(
+          this, "Loading defaults from {0}", new String[] {propsFile.getAbsolutePath()}, null);
+      this.defaultsProps.load(new FileInputStream(propsFile));
+    }
 
-    // Construct the map of arg info that are used for multiple subcommands.
-    fillAllStdArgs(defaultsProps);
+    this.parser = ArgumentParsers.newFor(prog).build();
 
     // The arg use to set the pproperties file containng defaults.
     addConfigArg();
 
-    subParsers = parser.addSubparsers().description("Available Comands").dest(ARG_CMD);
+    subParsers = parser.addSubparsers().description("Available Comands");
 
     addPingBrokerCmd();
     addPingDocbaseCmd();

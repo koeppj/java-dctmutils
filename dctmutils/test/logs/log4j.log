@@ -1,0 +1,52 @@
+10:33:59,881 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Entering UtilsArgParserFactory
+10:33:59,886 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Loading defaults from C:\Users\johns\projects\java-dctmutils\dctmutils\test\etc\config.properties
+10:34:00,076 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Adding Repo Argument
+10:34:00,077 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Adding Repo Argument
+10:34:00,077 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Adding User Argument
+10:34:00,077 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Adding Password Argument
+10:34:00,077 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Exiting UtilsArgParserFactory
+10:34:00,089 DEBUG [main] net.koeppster.dctm.utils.UtilsArgsParserFactory - Loading Config from file C:\Users\johns\projects\java-dctmutils\dctmutils\test\etc\config.properties
+10:34:01,316  WARN [main] com.documentum.fc.client.impl.bof.classmgmt.ModuleManager - [DFC_BOF_COULDNT_CONNECT_TO_REGISTRY] Unable to connect to module registry, docbase name sandbox username dm_bof_registry.
+com.documentum.fc.client.DfAuthenticationException: [DM_SESSION_E_AUTH_FAIL]error:  "Authentication failed for user dm_bof_registry with docbase sandbox."
+	at com.documentum.fc.client.impl.docbase.DocbaseExceptionMapper.newException(DocbaseExceptionMapper.java:52) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.MessageEntry.getException(MessageEntry.java:39) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseMessageManager.getException(DocbaseMessageManager.java:137) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.netwise.NetwiseDocbaseRpcClient.checkForMessages(NetwiseDocbaseRpcClient.java:332) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.netwise.NetwiseDocbaseRpcClient.applyForObject(NetwiseDocbaseRpcClient.java:680) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection$8.evaluate(DocbaseConnection.java:1572) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection.evaluateRpc(DocbaseConnection.java:1272) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection.applyForObject(DocbaseConnection.java:1564) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.docbase.DocbaseApi.authenticateUser(DocbaseApi.java:1894) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection.authenticate(DocbaseConnection.java:460) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection.open(DocbaseConnection.java:140) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection.<init>(DocbaseConnection.java:109) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnection.<init>(DocbaseConnection.java:69) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnectionFactory.newDocbaseConnection(DocbaseConnectionFactory.java:32) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnectionManager.createNewConnection(DocbaseConnectionManager.java:202) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.connection.docbase.DocbaseConnectionManager.getDocbaseConnection(DocbaseConnectionManager.java:132) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.SessionFactory.newSession(SessionFactory.java:24) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.PrincipalAwareSessionFactory.newSession(PrincipalAwareSessionFactory.java:44) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.PooledSessionFactory.newSession(PooledSessionFactory.java:49) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.SessionManager.getSessionFromFactory(SessionManager.java:106) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.SessionManager.newSession(SessionManager.java:281) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.SessionManager.newSession(SessionManager.java:68) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.session.SessionManager.getSession(SessionManager.java:190) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.bof.classmgmt.ModuleManager.connect(ModuleManager.java:402) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.bof.classmgmt.ModuleManager.init(ModuleManager.java:357) ~[dfc.jar:?]
+	at com.documentum.fc.client.impl.bof.classmgmt.ModuleManager.getInstance(ModuleManager.java:43) ~[dfc.jar:?]
+	at com.documentum.fc.client.security.impl.DfcIdentityPublisher.<init>(DfcIdentityPublisher.java:44) ~[dfc.jar:?]
+	at com.documentum.fc.client.security.internal.RegistrationMgr.register(RegistrationMgr.java:34) ~[dfc.jar:?]
+	at com.documentum.fc.impl.RuntimeContext.<clinit>(RuntimeContext.java:205) ~[dfc.jar:?]
+	at com.documentum.fc.client.DfClient.<clinit>(DfClient.java:792) ~[dfc.jar:?]
+	at net.koeppster.dctm.utils.AbstractCmd.getDocbaseMap(AbstractCmd.java:107) ~[main/:?]
+	at net.koeppster.dctm.utils.PrintMapCmd.execute(PrintMapCmd.java:13) ~[main/:?]
+	at net.koeppster.dctm.utils.Utils.main(Utils.java:25) ~[main/:?]
+10:34:01,332  WARN [main] com.documentum.fc.client.security.internal.RegistrationMgr - [DFC_SECURITY_GR_PUBLICATION_FAILED] Publication of DFC instance with global registry failed
+com.documentum.fc.common.DfException: [DFC_BOF_GLOBAL_REGISTRY_UNAVAILABLE] Unable to connect to the global registry no session
+	at com.documentum.fc.client.security.impl.DfcIdentityPublisher.<init>(DfcIdentityPublisher.java:55) ~[dfc.jar:?]
+	at com.documentum.fc.client.security.internal.RegistrationMgr.register(RegistrationMgr.java:34) ~[dfc.jar:?]
+	at com.documentum.fc.impl.RuntimeContext.<clinit>(RuntimeContext.java:205) ~[dfc.jar:?]
+	at com.documentum.fc.client.DfClient.<clinit>(DfClient.java:792) ~[dfc.jar:?]
+	at net.koeppster.dctm.utils.AbstractCmd.getDocbaseMap(AbstractCmd.java:107) ~[main/:?]
+	at net.koeppster.dctm.utils.PrintMapCmd.execute(PrintMapCmd.java:13) ~[main/:?]
+	at net.koeppster.dctm.utils.Utils.main(Utils.java:25) ~[main/:?]
