@@ -36,7 +36,8 @@ dependencies {
     implementation 'net.sourceforge.argparse4j:argparse4j:0.9.0'
     implementation 'commons-io:commons-io:2.18.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
-
+    implementation 'org.jasypt:jasypt:1.9.3'
+    implementation 'net.java.dev.jna:jna-platform:5.16.0'
     implementation fileTree(dir:'C:/Program Files/Documentum/Shared', include: ['*.jar'])
 
 }

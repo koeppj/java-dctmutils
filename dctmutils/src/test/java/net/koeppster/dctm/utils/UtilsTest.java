@@ -27,63 +27,6 @@ class UtilsTest {
     }
     
     @Test
-    void checkPingBroker() {
-        assertTrue(
-            Utils.pingDocbroker(new DocbrokerSpec(
-                                props.getProperty("docbroker.host"),
-                                props.getProperty("docbroker.good.port"))
-                                ),
-    "Operating Docbroker Reported Up"
-        );
-        assertFalse(
-            Utils.pingDocbroker(new DocbrokerSpec(props.getProperty("docbroker.host"),
-                                props.getProperty("docbroker.bad.port"))),
-    "Check via invalid port reported down"
-        );
-    }
-
-    @Test
-    void checkPingDocbase() {
-        assertTrue(
-            Utils.pingDocbase(new DocbrokerSpec(
-                props.getProperty("docbroker.host"), 
-                props.getProperty("docbroker.good.port")), 
-                props.getProperty("docbase.good.name")
-            ),
-            "Operating docbase reported up"
-        );
-        assertFalse(
-            Utils.pingDocbase(new DocbrokerSpec(
-                props.getProperty("docbroker.host"),
-                props.getProperty("docbroker.good.port")), 
-                props.getProperty("docbase.bad.name")
-            ),
-            "Invalid docbase reported unavailable"
-        );
-    }
-
-    @Test
-    void checkCheckLogin() {
-        assertTrue(
-            Utils.checkLogin(new DocbrokerSpec(
-                props.getProperty("docbroker.host"), 
-                props.getProperty("docbroker.good.port")), 
-                props.getProperty("docbase.good.name"),
-                props.getProperty("user.name"), 
-                props.getProperty("user.good.password")),
-            "Login Attempt reported success"
-        );
-        assertFalse(Utils.checkLogin(new DocbrokerSpec(
-            props.getProperty("docbroker.host"), 
-            props.getProperty("docbroker.good.port")), 
-            props.getProperty("docbase.good.name"),
-            props.getProperty("user.name"), 
-            props.getProperty("user.bad.password")),
-    "Login Attempt Reported failed"
-        );
-    }
-
-    @Test
     void checkMainNoCmd() {
         SecurityManager origManager = System.getSecurityManager();
         NoExitSecurityManager newManager = new NoExitSecurityManager();

@@ -44,14 +44,6 @@ public class UtilsArgsParserFactory {
      * First parse to to see if a config file has been specified.
      */
     Namespace ns = parser.parseArgs(args);
-    if (null != ns.get(ARG_CONFIG)) {
-      File configFile = (File) ns.get(ARG_CONFIG);
-      DfLogger.debug(
-          this, "Loading Config from file {0}", new String[] {configFile.getAbsolutePath()}, null);
-      System.out.printf("Using config file %s to load defaults%n", configFile.getAbsolutePath());
-      this.defaultsProps.load(new FileInputStream(configFile));
-      return parser.parseArgs(args);
-    }
     return ns;
   }
 
@@ -72,7 +64,7 @@ public class UtilsArgsParserFactory {
         ARG_HOST,
         "Docbroker (will use dfc.properties of not specifed)",
         required,
-        DocbrokerSpec.class);
+        new DocbrokerSpecType());
   }
 
   /**
@@ -103,7 +95,8 @@ public class UtilsArgsParserFactory {
       boolean required,
       Class<?> argType)
       throws ArgumentParserException {
-    Argument arg =
+    DfLogger.debug(this, "Adding Argument {0} with Class of type {1}", new String[] {dest, argType.getClass().getName()}, null);
+        Argument arg =
         arg0.addArgument(argNames)
             .dest(dest)
             .help(helpText)
@@ -126,6 +119,7 @@ public class UtilsArgsParserFactory {
       boolean required,
       ArgumentType<T> argType)
       throws ArgumentParserException {
+    DfLogger.debug(this, "Adding Argument {0} with ArgumentType {1}", new String[] {dest, argType.getClass().getName()}, null);
     Argument arg =
         arg0.addArgument(argNames)
             .dest(dest)
@@ -150,32 +144,54 @@ public class UtilsArgsParserFactory {
     addArgument(arg0, new String[] {"-u", "--user"}, ARG_USER, "Repository User Name", true);
   }
 
-  void addPasswordArg(ArgumentParser arg0) {
+  void addPasswordArg(ArgumentParser arg0) throws ArgumentParserException {
     DfLogger.debug(this, "Adding Password Argument", null, null);
-    addArgument(arg0, new String[] {"-p", "--password"}, ARG_PASS, "Repository Password", true);
+    addArgument(
+        arg0,
+        new String[] {"-p", "--password"},
+        ARG_PASS,
+        "Repository Password",
+        true,
+        new PasswordType());
   }
 
   //
   // Add the Subpaesers
   //
   void addPingBrokerCmd() throws ArgumentParserException {
-    Subparser pingBrokerCmds = subParsers.addParser(CMD_PINGBROKER).help("Ping Docbroker").setDefault("func", new PingBrokerCmd());
+    Subparser pingBrokerCmds =
+        subParsers
+            .addParser(CMD_PINGBROKER)
+            .help("Ping Docbroker")
+            .setDefault("func", new PingBrokerCmd());
     addHostArg(pingBrokerCmds, true);
   }
 
   void addPrintMapCmd() throws ArgumentParserException {
-    Subparser pingBrokerCmds = subParsers.addParser(CMD_PRINTMAP).help("Print Docbroker Map").setDefault("func", new PrintMapCmd());
+    Subparser pingBrokerCmds =
+        subParsers
+            .addParser(CMD_PRINTMAP)
+            .help("Print Docbroker Map")
+            .setDefault("func", new PrintMapCmd());
     addHostArg(pingBrokerCmds, false);
   }
 
   void addPingDocbaseCmd() throws ArgumentParserException {
-    Subparser cmd = subParsers.addParser(CMD_PINGDOCBASE).help("Ping Docbase").setDefault("func", new PIngDocbaseCmd());
+    Subparser cmd =
+        subParsers
+            .addParser(CMD_PINGDOCBASE)
+            .help("Ping Docbase")
+            .setDefault("func", new PIngDocbaseCmd());
     addHostArg(cmd, false);
     addRepoArg(cmd);
   }
 
   void addCheckLoginCmd() throws ArgumentParserException {
-    Subparser cmd = subParsers.addParser(CMD_CHECKLOGIN).help("Check Login").setDefault("func", new CheckLoginCmd());
+    Subparser cmd =
+        subParsers
+            .addParser(CMD_CHECKLOGIN)
+            .help("Check Login")
+            .setDefault("func", new CheckLoginCmd());
     addHostArg(cmd, false);
     addRepoArg(cmd);
     addUserArg(cmd);
@@ -183,7 +199,8 @@ public class UtilsArgsParserFactory {
   }
 
   void addExportCmd() throws ArgumentParserException {
-    Subparser cmd = subParsers.addParser(CMD_EXPORT).help("Export Objects").setDefault("func", new ExportCmd());
+    Subparser cmd =
+        subParsers.addParser(CMD_EXPORT).help("Export Objects").setDefault("func", new ExportCmd());
     addHostArg(cmd, false);
     addRepoArg(cmd);
     addUserArg(cmd);

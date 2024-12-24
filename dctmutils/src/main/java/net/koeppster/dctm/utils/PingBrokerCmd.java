@@ -2,19 +2,15 @@ package net.koeppster.dctm.utils;
 
 import java.io.IOException;
 
-import com.documentum.fc.client.IDfDocbaseMap;
 import com.documentum.fc.common.DfException;
+import com.documentum.fc.common.DfLogger;
 import com.fasterxml.jackson.core.exc.StreamWriteException;
 import com.fasterxml.jackson.databind.DatabindException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 
 
 public class PingBrokerCmd extends AbstractCmd {
-
-  private static ObjectMapper mapper = new ObjectMapper();
 
   /**
    * Prints a Docbroker Map. 
@@ -27,9 +23,11 @@ public class PingBrokerCmd extends AbstractCmd {
    */
   @Override
   public void execute(Namespace ns) throws UtilsException {
+    DfLogger.debug(this, "PingBrokerCmd.execute({0})", new String[] {ns.toString()}, null);
     try {
-      IDfDocbaseMap map = getDocbaseMap(ns.get(UtilsArgsParserFactory.ARG_HOST));
-      System.out.printf("Docbroker %n responded%n", ns.get(UtilsArgsParserFactory.ARG_HOST));
+      DocbrokerSpec spec = (DocbrokerSpec)ns.get(null == UtilsArgsParserFactory.ARG_HOST ? null : UtilsArgsParserFactory.ARG_HOST);
+      getDocbaseMap(spec);
+      System.out.printf("Docbroker %s responded%n", ns.get(UtilsArgsParserFactory.ARG_HOST).toString());
     } catch (DfException e) {
       throw new UtilsException("Error Pinging Docbroker.  Message is %s%n", e);
     }
