@@ -1,0 +1,6 @@
+Connect to docbase sandbox.sandbox
+Start running dm_post_upgrade_action.ebs script on docbase sandbox.sandbox
+Successfully updated Job dm_PostUpgradeAction
+Index creation successful.
+Finished running dm_post_upgrade_action.ebs...
+Disconnect from the docbase.

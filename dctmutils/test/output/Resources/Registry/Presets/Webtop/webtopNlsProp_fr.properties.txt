@@ -1,0 +1,4 @@
+LOCATION_LABEL=Emplacement du dossier
+LOCATION_DESCRIPTION=Emplacement du dossier du référentiel
+BROWSERTREE_DOCBASENODES_FILTER_LABEL=Navigation
+BROWSERTREE_DOCBASENODES_FILTER_DESCRIPTION=Noeuds de navigation

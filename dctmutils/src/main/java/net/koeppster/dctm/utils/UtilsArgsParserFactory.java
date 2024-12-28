@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Properties;
+import net.koeppster.dctm.exporter.ExportCmd;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.impl.type.ReflectArgumentType;
@@ -36,6 +37,7 @@ public class UtilsArgsParserFactory {
   public static final String CMD_PINGDOCBASE = "pingdocbase";
   public static final String CMD_PRINTMAP = "printmap";
   public static final String CMD_CHECKLOGIN = "checklogin";
+  public static final String CMD_ENCRYPT = "encrypt";
   public static final String CMD_EXPORT = "export";
 
   public Namespace getArguments(String[] args)
@@ -57,7 +59,7 @@ public class UtilsArgsParserFactory {
         Arguments.fileType().verifyCanRead().verifyExists());
   }
 
-  void addHostArg(ArgumentParser arg0, boolean required) throws ArgumentParserException {
+  public void addHostArg(ArgumentParser arg0, boolean required) throws ArgumentParserException {
     addArgument(
         arg0,
         new String[] {"-b", "--broker"},
@@ -77,8 +79,9 @@ public class UtilsArgsParserFactory {
    * @param helpText The help text describing the argument.
    * @param required A boolean indicating whether the argument is required.
    */
-  void addArgument(
+  public void addArgument(
       ArgumentParser arg0, String[] argNames, String dest, String helpText, boolean required) {
+    DfLogger.debug(this, "Adding Argument {0} with no Class", new String[] {dest}, null);
     arg0.addArgument(argNames)
         .dest(dest)
         .help(helpText)
@@ -87,7 +90,21 @@ public class UtilsArgsParserFactory {
             (defaultsProps.getProperty(dest) == null) ? null : defaultsProps.getProperty(dest));
   }
 
-  void addArgument(
+  public void addArgumentFlag(
+      ArgumentParser arg0, String[] argNames, String dest, String helpText) {
+    DfLogger.debug(this, "Adding Flag Argument {0}", new String[] {dest}, null);
+    arg0.addArgument(argNames)
+        .dest(dest)
+        .help(helpText)
+        .type(Boolean.class)
+        .action(Arguments.storeTrue())
+        .setDefault(
+            (defaultsProps.getProperty(dest) == null)
+                ? false
+                : Boolean.valueOf(defaultsProps.getProperty(dest)));
+  }
+
+  public void addArgument(
       ArgumentParser arg0,
       String[] argNames,
       String dest,
@@ -95,8 +112,12 @@ public class UtilsArgsParserFactory {
       boolean required,
       Class<?> argType)
       throws ArgumentParserException {
-    DfLogger.debug(this, "Adding Argument {0} with Class of type {1}", new String[] {dest, argType.getClass().getName()}, null);
-        Argument arg =
+    DfLogger.debug(
+        this,
+        "Adding Argument {0} with Class of type {1}",
+        new String[] {dest, argType.getClass().getName()},
+        null);
+    Argument arg =
         arg0.addArgument(argNames)
             .dest(dest)
             .help(helpText)
@@ -111,7 +132,7 @@ public class UtilsArgsParserFactory {
     }
   }
 
-  <T> void addArgument(
+  public <T> void addArgument(
       ArgumentParser arg0,
       String[] argNames,
       String dest,
@@ -119,7 +140,11 @@ public class UtilsArgsParserFactory {
       boolean required,
       ArgumentType<T> argType)
       throws ArgumentParserException {
-    DfLogger.debug(this, "Adding Argument {0} with ArgumentType {1}", new String[] {dest, argType.getClass().getName()}, null);
+    DfLogger.debug(
+        this,
+        "Adding Argument {0} with ArgumentType {1}",
+        new String[] {dest, argType.getClass().getName()},
+        null);
     Argument arg =
         arg0.addArgument(argNames)
             .dest(dest)
@@ -134,17 +159,17 @@ public class UtilsArgsParserFactory {
     }
   }
 
-  void addRepoArg(ArgumentParser arg0) {
+  public void addRepoArg(ArgumentParser arg0) {
     DfLogger.debug(this, "Adding Repo Argument", null, null);
     addArgument(arg0, new String[] {"-r", "--repo"}, ARG_REPO, "Repository Name", true);
   }
 
-  void addUserArg(ArgumentParser arg0) {
+  public void addUserArg(ArgumentParser arg0) {
     DfLogger.debug(this, "Adding User Argument", null, null);
     addArgument(arg0, new String[] {"-u", "--user"}, ARG_USER, "Repository User Name", true);
   }
 
-  void addPasswordArg(ArgumentParser arg0) throws ArgumentParserException {
+  public void addPasswordArg(ArgumentParser arg0) throws ArgumentParserException {
     DfLogger.debug(this, "Adding Password Argument", null, null);
     addArgument(
         arg0,
@@ -198,13 +223,24 @@ public class UtilsArgsParserFactory {
     addPasswordArg(cmd);
   }
 
-  void addExportCmd() throws ArgumentParserException {
+  void addEncryptCmd() throws ArgumentParserException {
     Subparser cmd =
-        subParsers.addParser(CMD_EXPORT).help("Export Objects").setDefault("func", new ExportCmd());
-    addHostArg(cmd, false);
-    addRepoArg(cmd);
-    addUserArg(cmd);
-    addPasswordArg(cmd);
+        subParsers
+            .addParser(CMD_ENCRYPT)
+            .help("Encrypt Password Text")
+            .setDefault("func", new PasswordEncryptCmd());
+    addArgument(
+        cmd,
+        new String[] {"-p", "--password"},
+        ARG_PASS,
+        "Password to encrypt",
+        true,
+        new PasswordType());
+  }
+
+  public Subparser addSubparser(String cmd, String helpText, UtilsFunction func) {
+    Subparser sub = subParsers.addParser(cmd).help(helpText).setDefault("func", func);
+    return sub;
   }
 
   /**
@@ -236,6 +272,8 @@ public class UtilsArgsParserFactory {
     addPingDocbaseCmd();
     addPrintMapCmd();
     addCheckLoginCmd();
+    addEncryptCmd();
+    ExportCmd.addCommandToArgParser(this);
     DfLogger.debug(this, "Exiting UtilsArgParserFactory", null, null);
   }
 
@@ -245,5 +283,11 @@ public class UtilsArgsParserFactory {
 
   public void printHelp(OutputStream stream) {
     parser.printHelp(new PrintWriter(stream));
+  }
+
+  public void addArgument(
+      Subparser cmd, String argDatabase, String[] argDatabaseNames, String argDatabaseHelp) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'addArgument'");
   }
 }

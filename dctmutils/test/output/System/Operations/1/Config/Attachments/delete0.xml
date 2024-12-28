@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<config version='1.0'>
+    <!--Can only scope to a domain. (type, aspect and other scopes not allowed when modifying an operation)-->
+    <scope>
+
+        <operation modifies="Delete:application='operations'">
+            <insertfirst path="populatorset">
+                 <populator ref="attachment_folder_populator"/>
+            </insertfirst>
+        </operation>
+
+        <populator id="attachment_folder_populator">
+            <module name="com.documentum.services.collaboration.attachments.operations.AttachmentFolderPopulator"/>
+        </populator>
+
+    </scope>
+
+</config>

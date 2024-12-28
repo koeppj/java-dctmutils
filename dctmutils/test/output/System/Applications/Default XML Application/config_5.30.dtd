@@ -1,0 +1,434 @@
+<!--***************************************************************************** -->
+<!--* (c) Copyright 1994-2005. EMC Corporation.  All Rights Reserved.             -->
+<!--* May not be used without prior written agreement signed                      -->
+<!--* by an EMC corporate officer.                                                -->
+<!-- Name: Config_5.3.dtd                                                         -->
+<!-- Description:                                                                 -->
+<!-- This is the configuration dtd for XML application configuration files        -->
+<!-- in Documentum for DFC 5.3 clients.                                         -->
+<!-- This DTD defines the rules of how you can automate the processing of XML     -->
+<!-- instances through library services in the Content Repository                 -->
+<!-- DFC Operations for Import, Export, Checkin, Checkout use this configuration  -->
+<!-- file for processing XML Files. For more complete reference and usage         -->
+<!-- information, see the XML Application Development Guide.                      -->
+<!--***************************************************************************** -->
+<!--***************************************************************************** -->
+<!-- Entity: template-format.                                                     -->
+<!-- reused content model in DTD                                                  -->
+<!-- Specifies that the content of an element can contain any combination of      -->
+<!-- static text, variables (using the <var> element), or XPath expressions       -->
+<!-- (using the <expression> element)                                             -->
+<!--***************************************************************************** -->
+<!ENTITY % template-format "(#PCDATA| var | expression)*">
+<!--***************************************************************************** -->
+<!-- Entity: map_rule_content.                                                    -->
+<!-- reused content model in DTD                                                  -->
+<!-- Parameter entity that defines a list of elements that can be used as         -->
+<!-- children of elements whose primary purpose is to map content from an XML     -->
+<!-- document onto Docbase objects and metadata.                                  -->
+<!--***************************************************************************** -->
+<!ENTITY % map_rule_content " (variables?
+			     , location*
+                             , owner_name?
+                             , object_name?
+                             , ((acl_name, acl_domain?) | default_acl)?
+                             , object_type?
+                             , business_policy?
+                             , metadata? )">
+<!--*****************************************************************************-->
+<!-- ELEMENT:allow_work_in_progress.                                             -->
+<!-- Allows the XML document to bypass well-formedness and validation checks.    -->
+<!--*****************************************************************************-->
+<!ELEMENT allow_work_in_progress EMPTY>
+<!ATTLIST allow_work_in_progress
+	version_label CDATA #REQUIRED
+>
+<!--*****************************************************************************-->
+<!-- ELEMENT:application.                                                        -->
+<!-- The root element in the XML application configuration file.                 -->
+<!--*****************************************************************************-->
+<!ELEMENT application (name, app_pattern, allow_work_in_progress?, validation?, dds_validation?, java_classes?,
+    external_variables?, suppress_output_of_default_attributes?, encode_reserved_XML_chars?, map_rules)>
+
+<!--*****************************************************************************-->
+<!-- ELEMENT:external_variables.                                                 -->
+<!-- Container for a list of external variables.                                 -->
+<!--*****************************************************************************-->
+<!ELEMENT external_variables (external_variable+)>
+<!--*****************************************************************************-->
+<!-- ELEMENT:external_variable.                                                  -->
+<!-- Declares an external variable.                                              -->
+<!--*****************************************************************************-->
+<!ELEMENT external_variable (name, default)>
+<!--*****************************************************************************-->
+<!-- ELEMENT:java_classes.                                                       -->
+<!-- Declares the set of Java classes that can be invoked.                       -->
+<!--*****************************************************************************-->
+<!ELEMENT java_classes (java_class+)>
+<!--*****************************************************************************-->
+<!-- ELEMENT:java_class.                                                         -->
+<!-- Specifies a Java class.                                                     -->
+<!--*****************************************************************************-->
+<!ELEMENT java_class EMPTY>
+<!ATTLIST java_class
+	prefix NMTOKEN #REQUIRED
+	classname CDATA #REQUIRED
+>
+<!--***************************************************************************** -->
+<!-- ELEMENT: name.                                                               -->
+<!-- Specifies the name of the XML application, the name of Documentum            -->
+<!-- properties to populate, or a variable name, depending on the parent element. -->
+<!--***************************************************************************** -->
+<!ELEMENT name (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: app_pattern.                                                        -->
+<!-- Container element for identifier information that is used for application    -->
+<!-- detection.                                                                   -->
+<!--***************************************************************************** -->
+<!ELEMENT app_pattern (sys_id?, pub_id?, schema?, element*)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: schema.                                                             -->
+<!-- Specifies the name of a schema file that is managed by the XML application.  -->
+<!--***************************************************************************** -->
+<!ELEMENT schema (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: sys_id.                                                             -->
+<!-- Specifies the name of a DTD file that is managed by the XML application.     -->
+<!--***************************************************************************** -->
+<!ELEMENT sys_id (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: pub_id.                                                             -->
+<!-- Specifies the public identifier, if a public identifier is used as part of   -->
+<!-- the document type declaration in the XML document.                           -->
+<!--***************************************************************************** -->
+<!ELEMENT pub_id (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: element.                                                            -->
+<!-- Specifies the name of an element, for purposes determined by the context.    -->
+<!--***************************************************************************** -->
+<!ELEMENT element (#PCDATA)>
+<!ATTLIST element
+	namespaceURI CDATA #IMPLIED
+>
+<!--***************************************************************************** -->
+<!-- ELEMENT: validation.                                                         -->
+<!-- Causes the parser to run in validating mode.                                 -->
+<!--***************************************************************************** -->
+<!ELEMENT validation EMPTY>
+<!--***************************************************************************** -->
+<!-- ELEMENT: dds_validation.                                                     -->
+<!-- If present, specifies that each object that is created or checked in will be -->
+<!-- validated with the data dictionary on the server.                            -->
+<!--***************************************************************************** -->
+<!ELEMENT dds_validation EMPTY>
+<!--***************************************************************************** -->
+<!-- ELEMENT: date_format.                                                        -->
+<!-- Specifies the format of dates that are assigned to Docbase properties.       -->
+<!--***************************************************************************** -->
+<!ELEMENT date_format (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: suppress_output_of_default_attributes.                              -->
+<!-- Specifies that default attributes that are not specified in the XML instance -->
+<!-- should not be written into the XML that is stored in the docbase             -->
+<!--***************************************************************************** -->
+<!ELEMENT suppress_output_of_default_attributes EMPTY>
+<!--***************************************************************************** -->
+<!-- ELEMENT: encode_reserved_XML_chars.                                          -->
+<!-- Specifies that the 5 reserved XML chars: ampersand, les-than, greater-than   -->
+<!-- quote and apostrophe should be encoded (e.g. &amp;, &lt;, etc) in metadata   -->
+<!--***************************************************************************** -->
+<!ELEMENT encode_reserved_XML_chars EMPTY>
+<!--***************************************************************************** -->
+<!-- ELEMENT: map_rules.                                                          -->
+<!-- Contains the rules that specify how to process an XML document in Documentum.-->
+<!--***************************************************************************** -->
+<!ELEMENT map_rules ((xml_content_rule | link_rule | non_xml_content_rule)*, (entity_rule, (xml_content_rule | link_rule | non_xml_content_rule)*)?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: xml_content_rule.                                                   -->
+<!-- Specifies how to store and create XML content as objects in Documentum.      -->
+<!--***************************************************************************** -->
+<!ELEMENT xml_content_rule (element_selection_pattern, (%map_rule_content;), version_label?, (make_entity | link_template))>
+<!ATTLIST xml_content_rule
+	editable_virtual_doc (false) "false"
+	export (inline) "inline"
+	make_object (true | false) "true"
+>
+<!--***************************************************************************** -->
+<!-- ELEMENT: link_rule.                                                          -->
+<!-- Specifies how Documentum recognizes and manages links and NDATA entities     -->
+<!-- for the XML application.                                                     -->
+<!--***************************************************************************** -->
+<!ELEMENT link_rule (element_selection_pattern, link_target, (%map_rule_content;), version_label?, permanent_link?)>
+<!ATTLIST link_rule
+	peer_or_child (peer | child) "child"
+	ndata (true | false) "false"
+>
+<!--***************************************************************************** -->
+<!-- ELEMENT: non_xml_content_rule.                                               -->
+<!-- Specifies how Documentum recognizes and manages non-XML content that is      -->
+<!-- embedded in an XML document.                                                 -->
+<!--***************************************************************************** -->
+<!ELEMENT non_xml_content_rule (element_selection_pattern, (%map_rule_content;), format_attr, link_template)>
+<!ATTLIST non_xml_content_rule
+	encoding (base64 | text) #FIXED "base64"
+>
+<!--***************************************************************************** -->
+<!-- ELEMENT: entity_rule.                                                        -->
+<!-- Specifies how Documentum processes parsed entities.                          -->
+<!--***************************************************************************** -->
+<!ELEMENT entity_rule (location*, owner_name?, object_name?, ((acl_name, acl_domain?) | default_acl)?, object_type?, business_policy?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: element_selection_pattern.                                          -->
+<!-- Specifies how rules are triggered when parsing the XML document.             -->
+<!--***************************************************************************** -->
+<!ELEMENT element_selection_pattern (element, context_rule?, occurrence?, (attribute_test | attribute_exist_test)*)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: occurrence.                                                         -->
+<!-- Tests that an element is the nth occurrence of all elements of the same name.-->
+<!--***************************************************************************** -->
+<!ELEMENT occurrence (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: context_rule.                                                       -->
+<!-- Specifies the structural context in which an element must occur for a        -->
+<!-- rule to apply.                                                               -->
+<!--***************************************************************************** -->
+<!ELEMENT context_rule (child_of | descendant_of)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: child_of.                                                           -->
+<!-- Specifies the name of the parent element.                                    -->
+<!--***************************************************************************** -->
+<!ELEMENT child_of (element_selection_pattern)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: descendant_of.                                                      -->
+<!-- Specifies the name of an ascendant element.                                  -->
+<!--***************************************************************************** -->
+<!ELEMENT descendant_of (element_selection_pattern)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: attribute_test.                                                     -->
+<!-- Used to test the value of an attribute for a specified element.              -->
+<!--***************************************************************************** -->
+<!ELEMENT attribute_test (attr_name, value)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: attr_name.                                                          -->
+<!-- The name of the attribute whose value will be determined.                    -->
+<!--***************************************************************************** -->
+<!ELEMENT attr_name (#PCDATA)>
+<!ATTLIST attr_name	namespaceURI CDATA #IMPLIED>
+<!--***************************************************************************** -->
+<!-- ELEMENT: value.                                                              -->
+<!-- Contains the value of the attribute specified in <attr_name>.                -->
+<!--***************************************************************************** -->
+<!ELEMENT value (#PCDATA)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: attribute_exists_test.                                              -->
+<!-- Used to test the presence of an attribute for a specified element.           -->
+<!-- Note: as of initial 5.3 release, the 'attribute_exist_test' option is        -->
+<!-- not implemented.                                                             -->
+<!--***************************************************************************** -->
+<!ELEMENT attribute_exist_test (attr_name)>
+<!ATTLIST attribute_exist_test attr_exists (true | false) "true">
+<!--***************************************************************************** -->
+<!-- ELEMENT: variables.                                                          -->
+<!-- Contains all of the variable definitions and values in a mapping rule.       -->
+<!--***************************************************************************** -->
+<!ELEMENT variables (variable+)>
+<!--***************************************************************************** -->
+<!-- ELEMENT variable.                                                            -->
+<!-- Defines a variable and its value, such as attribute value and element        -->
+<!-- content.                                                                     -->
+<!--***************************************************************************** -->
+<!ELEMENT variable (name, (content_of_element | attribute_value_of_element | tagname_of_element), default?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: default.                                                            -->
+<!-- Specifies the value that is assigned to a variable if no value is found in   -->
+<!-- the XML document.                                                            -->
+<!--***************************************************************************** -->
+<!ELEMENT default (#PCDATA)>
+
+<!--***************************************************************************** -->
+<!-- ELEMENT: content_of_element.                                                 -->
+<!-- Gets the content of an element in the XML document to store to a variable.   -->
+<!-- Attribute 'subelement_option' specifies whether subelement content is to be  -->
+<!-- included and if markup should be included.                                   -->
+<!-- Note: as of initial 5.3 release, the 'include_content_and_markup' option is  -->
+<!-- not implemented.                                                             -->
+<!--***************************************************************************** -->
+<!ELEMENT content_of_element (this_element | element_selection_pattern)>
+<!ATTLIST content_of_element subelement_option (include_content | include_content_and_markup) #IMPLIED>
+
+<!--***************************************************************************** -->
+<!-- ELEMENT: tagname_of_element.                                                 -->
+<!-- Gets the tag name of an element in the XML document to store to a variable.  -->
+<!--***************************************************************************** -->
+<!ELEMENT tagname_of_element (this_element | element_selection_pattern)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: attribute_value_of_element.                                         -->
+<!-- Gets the attribute value of an element in the XML document to store to a     -->
+<!-- variable.                                                                    -->
+<!--***************************************************************************** -->
+<!ELEMENT attribute_value_of_element ((this_element | element_selection_pattern), attr_name)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: this_element.                                                       -->
+<!-- Indicates that you want to use the element in the current context (the       -->
+<!-- element that triggered the mapping rule).                                    -->
+<!--***************************************************************************** -->
+<!ELEMENT this_element EMPTY>
+<!--***************************************************************************** -->
+<!-- ELEMENT: location.                                                           -->
+<!-- Specifies the folder or cabinet in the Docbase in which a chunked object     -->
+<!-- is stored.                                                                   -->
+<!--***************************************************************************** -->
+<!ELEMENT location (path, object_type?, metadata?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: path.                                                               -->
+<!-- Specifies the path of a folder.                                              -->
+<!--***************************************************************************** -->
+<!ELEMENT path %template-format;>
+<!--***************************************************************************** -->
+<!-- ELEMENT: object_type.                                                        -->
+<!-- Specifies what object type should be used for the chunk.                     -->
+<!--***************************************************************************** -->
+<!ELEMENT object_type %template-format;>
+<!--***************************************************************************** -->
+<!-- ELEMENT: metadata.                                                           -->
+<!-- Contains a list of elements that set single and repeating values of Docbase  -->
+<!-- properties.                                                                  -->
+<!--***************************************************************************** -->
+<!ELEMENT metadata (dctmattr | dctmattr_repeating | two_way_dctmattr | two_way_dctmattr_repeating)+>
+<!--***************************************************************************** -->
+<!-- ELEMENT: dctmattr.                                                           -->
+<!-- Sets the value of a single-value Docbase property.                           -->
+<!-- Note: as of initial 5.3 release, the 'encode_reserved_XML_chars' option is   -->
+<!-- not implemented.                                                             -->
+<!--***************************************************************************** -->
+<!ELEMENT dctmattr (name, template, date_format?, encode_reserved_XML_chars?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: two_way_dctmattr.                                                   -->
+<!-- Allows XML element content or attribute values to move from the XML document -->
+<!-- to single-value Docbase properties during import or checkin, and from        -->
+<!-- Docbase to the XML document during export or checkout.                       -->
+<!-- Note: as of initial 5.3 release, the 'encode_reserved_XML_chars' option is   -->
+<!-- not implemented.                                                             -->
+<!--***************************************************************************** -->
+<!ELEMENT two_way_dctmattr (name, var, date_format?, encode_reserved_XML_chars?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: dctmattr_repeating.                                                 -->
+<!-- Sets the values of a multivalue (repeating) Docbase property.                -->
+<!-- Note: as of initial 5.3 release, the 'encode_reserved_XML_chars' option is   -->
+<!-- not implemented.                                                             -->
+<!--***************************************************************************** -->
+<!ELEMENT dctmattr_repeating (name, template, date_format?, encode_reserved_XML_chars?)>
+<!--***************************************************************************** -->
+<!-- ELEMENT: two_way_dctmattr_repeating.                                         -->
+<!-- Allows XML element content or attribute values to move from the XML document -->
+<!-- to multivalue (repeating) Docbase properties during import or checkin, and   -->
+<!-- from Docbase to the XML document during export or checkout.                  -->
+<!-- Note: as of initial 5.3 release, the 'encode_reserved_XML_chars' option is   -->
+<!-- not implemented.                                                             -->
+<!--*****************************************************************************-->
+<!ELEMENT two_way_dctmattr_repeating (name, var, date_format?, encode_reserved_XML_chars?)>
+
+<!--***************************************************************************** -->
+<!-- ELEMENT: template.                                                           -->
+<!-- Provides the value for a Docbase property.                                   -->
+<!--***************************************************************************** -->
+<!ELEMENT template %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: owner_name.                                                        -->
+<!-- Specifies the name of the owner of the object.                              -->
+<!--*****************************************************************************-->
+<!ELEMENT owner_name %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: object_name.                                                       -->
+<!-- Specifies the name of the object to be used.                                -->
+<!--*****************************************************************************-->
+<!ELEMENT object_name %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: acl_domain.                                                        -->
+<!-- Sets the domain (owner) of an ACL.                                          -->
+<!--*****************************************************************************-->
+<!ELEMENT acl_domain %template-format;>
+<!ELEMENT default_acl EMPTY>
+<!ATTLIST default_acl
+	value (FOLDER | TYPE | USER | NONE) "NONE"
+>
+<!--*****************************************************************************-->
+<!-- ELEMENT: acl_name.                                                          -->
+<!-- Specifies the ACL (permissions) for the object.                             -->
+<!--*****************************************************************************-->
+<!ELEMENT acl_name %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: business_policy.                                                   -->
+<!-- Associates a business policy (document lifecycle) with an object.           -->
+<!--*****************************************************************************-->
+<!ELEMENT business_policy (policy_name, policy_scope?, policy_state)>
+<!--*****************************************************************************-->
+<!-- ELEMENT: policy_name.                                                       -->
+<!-- Specifies the name or object ID of an existing business policy (document    -->
+<!-- lifecycle).                                                                 -->
+<!--*****************************************************************************-->
+<!ELEMENT policy_name %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: policy_scope.                                                      -->
+<!-- Specifies the scope of the business policy (document lifecycle).            -->
+<!--*****************************************************************************-->
+<!ELEMENT policy_scope %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: policy_state.                                                      -->
+<!-- Specifies the initial state of the business policy (document lifecycle).    -->
+<!--*****************************************************************************-->
+<!ELEMENT policy_state %template-format;>
+<!--*****************************************************************************-->
+<!-- ELEMENT: version_label.                                                     -->
+<!-- Assigns early binding to a symbolic version label when a chunked object is  -->
+<!-- imported.                                                                   -->
+<!--*****************************************************************************-->
+<!ELEMENT version_label (#PCDATA)>
+<!--*****************************************************************************-->
+<!-- ELEMENT: make_entity.                                                       -->
+<!-- Specifies that a chunked object has an inline relationship to its parent,   -->
+<!-- when downloaded with the parent.                                            -->
+<!--*****************************************************************************-->
+<!ELEMENT make_entity EMPTY>
+<!--*****************************************************************************-->
+<!-- ELEMENT: link_template.                                                     -->
+<!-- Specifies that an XML chunk will be managed in the Docbase using a defined  -->
+<!-- link structure.                                                             -->
+<!--*****************************************************************************-->
+<!ELEMENT link_template %template-format;>
+
+<!--*****************************************************************************-->
+<!-- ELEMENT: var.                                                               -->
+<!-- Specifies a reference or pointer to the contents of a variable.             -->
+<!--*****************************************************************************-->
+<!ELEMENT var EMPTY>
+<!ATTLIST var
+	name CDATA #REQUIRED
+>
+<!--*****************************************************************************-->
+<!--  ELEMENT: expression                                                        -->
+<!-- Allows the use of XPath expressions and Java classes inside the XML         -->
+<!-- application configuration file.                                             -->
+<!--*****************************************************************************-->
+<!ELEMENT expression (#PCDATA | var)*>
+<!--*****************************************************************************-->
+<!-- ELEMENT: content_of_this_element.                                           -->
+<!-- Specifies that the content of the current element will be used as the       -->
+<!-- link target.                                                                -->
+<!--*****************************************************************************-->
+<!ELEMENT content_of_this_element EMPTY>
+<!--*****************************************************************************-->
+<!-- ELEMENT: link_target.                                                       -->
+<!-- Specifies the location of files that are linked to the XML document.        -->
+<!--*****************************************************************************-->
+<!ELEMENT link_target (attr_name | content_of_this_element)>
+<!--*****************************************************************************-->
+<!-- ELEMENT: permanent_link.                                                    -->
+<!-- If present, sets permanent link to true in relation objects.                -->
+<!--*****************************************************************************-->
+<!ELEMENT permanent_link EMPTY>
+<!--*****************************************************************************-->
+<!-- ELEMENT: format_attr.                                                       -->
+<!-- Specifies the format of the object created to store non-XML content.        -->
+<!--*****************************************************************************-->
+<!ELEMENT format_attr (#PCDATA)>

@@ -78,4 +78,8 @@ public class PasswordString {
   public PasswordString() {
     // Empty constructor
   }
+
+  public String getEncryptedString() {
+    return "UTILS_ENCRYPTED:".concat(this.password);
+  }
 }

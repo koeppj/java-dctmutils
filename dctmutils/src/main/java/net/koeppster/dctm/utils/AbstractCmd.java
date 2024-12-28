@@ -4,6 +4,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 import com.documentum.com.DfClientX;
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public abstract class AbstractCmd implements UtilsFunction {
-  static DfClientX clientX = new DfClientX();
+  protected static DfClientX clientX = new DfClientX();
   static JsonNodeFactory nodeFactory = JsonNodeFactory.instance;
   static ObjectMapper mapper = new ObjectMapper();
   static DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
@@ -47,6 +48,9 @@ public abstract class AbstractCmd implements UtilsFunction {
   }
 
   private static String docbaseDateToString(IDfTime value) {
+    if (null == value || value.isNullDate()) {
+      return null;
+    }
     Instant instant = value.getDate().toInstant();
     ZonedDateTime zdt = instant.atZone(ZoneOffset.UTC);
     return zdt.format(formatter);
@@ -70,15 +74,59 @@ public abstract class AbstractCmd implements UtilsFunction {
         return nodeFactory.textNode(value.asString());
     }
   }
+
   public static ObjectNode getJsonFromTypedObject(IDfTypedObject arg0) throws DfException {
+    return getJsonFromTypedObject(arg0, null);
+  }
+
+  public static ObjectNode getJsonFromTypedObject(IDfTypedObject arg0, ArrayList<String> arg1) throws DfException {
     ObjectNode node = JsonNodeFactory.instance.objectNode();
-    @SuppressWarnings("unchecked")
-    Enumeration<IDfAttr> attrs = arg0.enumAttrs();
-    while (attrs.hasMoreElements()) {
-      IDfAttr attr = attrs.nextElement();
-      String name = attr.getName();
-      int type = attr.getDataType();
-      boolean isRepeating = attr.isRepeating();
+
+    Enumeration<String> attrNames = null;
+    if (null!=arg1) {
+      attrNames = new Enumeration<String>() {
+        private final int size = (arg1 == null) ? 0 : arg1.size();
+        private int index = 0;
+  
+        @Override
+        public boolean hasMoreElements() {
+          return index < size;
+        }
+  
+        @Override
+        public String nextElement() {
+          return arg1.get(index++);
+        }
+      };
+    }
+    else {
+      attrNames = new Enumeration<String>() {
+        @SuppressWarnings("unchecked")
+        private final Enumeration<IDfAttr> attrsEnum = arg0.enumAttrs();
+  
+        @Override
+        public boolean hasMoreElements() {
+          return attrsEnum.hasMoreElements();
+        }
+  
+        @Override
+        public String nextElement() {
+          return attrsEnum.nextElement().getName();
+        }
+      };
+    }
+
+    while (attrNames.hasMoreElements()) {
+      String name = attrNames.nextElement();
+      DfLogger.debug(AbstractCmd.class, "Processing attribute: " + name, null, null);
+
+      // Skip if the attribute is not in this typed object
+      if (!arg0.hasAttr(name)) {
+        node.set(name, nodeFactory.missingNode());
+        continue;
+      }
+      int type = arg0.getAttrDataType(name);
+      boolean isRepeating = arg0.isAttrRepeating(name);
       if (isRepeating) {
        ArrayNode arrayNode = nodeFactory.arrayNode();
         for (int i = 0; i < arg0.getValueCount(name); i++) {
@@ -88,12 +136,13 @@ public abstract class AbstractCmd implements UtilsFunction {
         node.set(name, arrayNode);
       } else {
         IDfValue value = arg0.getValue(name);
-        node.set(name, getJsonValue(value, type));
+        JsonNode nodeValue = arg0.isNull(name) ? nodeFactory.missingNode() : getJsonValue(value, type);
+        node.set(name, nodeValue);
       }
     }
     return node;
   }
-
+  
   /**
    * Returns an {@link com.documentum.fc.client.IDfDocbaseMap}.  If the host and port are supplied 
    * then that docbroker is used.  Otherwise dfc.properties is used.

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE application SYSTEM "config.dtd">
+<!-- Name: DefaultXMLApplication.xml Version:5.1  Date:09/23/2002  -->
+<!-- This is the default XML Application Configuration File -->
+<!-- The only rule included is to recognize parsed entity references -->
+<application>
+<name>Default XML Application</name>
+<app_pattern><element>Unset</element></app_pattern>
+<map_rules>
+<entity_rule>
+	<location>
+		<path>entities</path>
+	</location>
+	<object_type>dm_document</object_type>
+</entity_rule>
+</map_rules>
+</application>

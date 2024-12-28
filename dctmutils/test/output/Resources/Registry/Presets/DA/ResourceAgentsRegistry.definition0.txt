@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<com.documentum.services.preset.definition:PresetPackageDefinition xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:com.documentum.services.preset.definition="http:///com/documentum/services/preset/definition.ecore"  name="ResourceAgentsRegistry" nlsBundle="ResourceAgentsRegistryNlsProp">
+  <itemDefinitions id="resourceagentsregistry"/>
+  <configTargetDefinitions id="daresourcemanagementconfig" inputSource="daresourcemanagementconfig:webcomponent/config/admin/resourcemanagement/resourcemanagementconfig.xml" pathExpression="preset_item[id=resourceagentsregistry]" name="resourcemanagementconfig"/>
+  <scopeDefinitions name="type"/>
+</com.documentum.services.preset.definition:PresetPackageDefinition>
