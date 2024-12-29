@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="ASCII"?>
-<com.documentum.services.preset.definition:PresetPackageDefinition xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:com.documentum.services.preset.definition="http:///com/documentum/services/preset/definition.ecore" name="webtop" nlsBundle="webtopNlsProp">
-  <configTargetDefinitions id="browsertree_docbasenodes_filter" name="component" inputSource="browsertree:webtop\config\browsertree_component.xml" pathExpression="preset_item[id=docbasenodes_filter]"/>
-  <itemDefinitions invalidScopeDefinitions="//@scopeDefinitions.0" id="docbasenodes_filter"/>
-  <scopeDefinitions name="location"/>
-</com.documentum.services.preset.definition:PresetPackageDefinition>

@@ -285,9 +285,4 @@ public class UtilsArgsParserFactory {
     parser.printHelp(new PrintWriter(stream));
   }
 
-  public void addArgument(
-      Subparser cmd, String argDatabase, String[] argDatabaseNames, String argDatabaseHelp) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'addArgument'");
-  }
 }

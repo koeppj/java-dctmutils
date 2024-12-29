@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<com.documentum.services.preset.definition:PresetPackageDefinition xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:com.documentum.services.preset.definition="http:///com/documentum/services/preset/definition.ecore" name="AdminAccessSet" nlsBundle="AdminAccessSetNlsProp">
-  <configTargetDefinitions id="administration_node_filter" name="component" inputSource="administration:webtop/config/administration_component.xml" pathExpression="preset_item[id=node_filter]"/>
-  <configTargetDefinitions id="configuration_node_filter" name="component" inputSource="configuration:webcomponent/config/admin/configuration/configuration_component.xml" pathExpression="preset_item[id=node_filter]"/>
-  <itemDefinitions id="node_filter"/>
-  <scopeDefinitions name="role"/>
-</com.documentum.services.preset.definition:PresetPackageDefinition>

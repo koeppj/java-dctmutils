@@ -9,9 +9,8 @@ import com.documentum.fc.common.DfLoginInfo;
 import com.documentum.fc.common.IDfLoginInfo;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-public class CheckLoginCmd extends AbstractCmd {
+public class CheckLoginCmd extends AbstractCmd implements UtilsFunction{
 
-  @Override
   public void execute(Namespace ns) throws UtilsException {
     DfLogger.debug(this, "Executing CheckLoginCmd.execute({0})", new String[] {ns.toString()},null);
     try {

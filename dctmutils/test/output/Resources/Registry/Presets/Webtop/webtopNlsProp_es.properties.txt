@@ -1,4 +1,0 @@
-LOCATION_LABEL=Ubicación de carpeta
-LOCATION_DESCRIPTION=Ubicación de carpeta del repositorio
-BROWSERTREE_DOCBASENODES_FILTER_LABEL=Exploración
-BROWSERTREE_DOCBASENODES_FILTER_DESCRIPTION=Nodos de exploración

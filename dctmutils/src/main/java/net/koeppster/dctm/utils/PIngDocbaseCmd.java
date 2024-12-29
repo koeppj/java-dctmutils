@@ -4,9 +4,8 @@ import com.documentum.fc.common.DfException;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 
-public class PIngDocbaseCmd extends AbstractCmd {
+public class PIngDocbaseCmd extends AbstractCmd implements UtilsFunction {
 
-  @Override
   public void execute(Namespace ns) throws UtilsException {
     try {
       getServerMap(ns.get(UtilsArgsParserFactory.ARG_HOST), ns.get(UtilsArgsParserFactory.ARG_REPO));

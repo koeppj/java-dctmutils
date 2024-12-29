@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public abstract class AbstractCmd implements UtilsFunction {
+public abstract class AbstractCmd {
   protected static DfClientX clientX = new DfClientX();
   static JsonNodeFactory nodeFactory = JsonNodeFactory.instance;
   static ObjectMapper mapper = new ObjectMapper();

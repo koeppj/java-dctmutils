@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 
-public class PrintMapCmd extends AbstractCmd {
+public class PrintMapCmd extends AbstractCmd implements UtilsFunction {
 
-    @Override
     public void execute(Namespace ns) throws UtilsException {
     try {
       IDfDocbaseMap map = AbstractCmd.getDocbaseMap(ns.get(UtilsArgsParserFactory.ARG_HOST));

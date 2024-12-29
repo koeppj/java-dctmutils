@@ -1,7 +1,0 @@
-BEGIN FormatItem
-ObjectType=dm_document
-PrimaryFormat=text
-ViewFormat=crtext
-EditFormat=text
-END FormatItem
-

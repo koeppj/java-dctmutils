@@ -1,3 +1,0 @@
-PRESET_ITEM_LABEL=Resource Agents Registry
-PRESET_ITEM_DESCRIPTION=Resource Agents Registry
-

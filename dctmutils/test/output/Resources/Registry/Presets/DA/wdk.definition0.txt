@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="ASCII"?>
-<com.documentum.services.preset.definition:PresetPackageDefinition xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:com.documentum.services.preset.definition="http:///com/documentum/services/preset/definition.ecore" name="wdk" nlsBundle="wdkNlsProp">
-  <configTargetDefinitions id="default_action_exclusions" name="actionservice" inputSource="default:wdk\config\actionservice.xml" pathExpression="preset_item[id=action_exclusions]"/>
-  <itemDefinitions id="action_exclusions"/>
-  <scopeDefinitions name="role"/>
-  <scopeDefinitions name="type"/>
-  <scopeDefinitions name="user"/>
-  <scopeDefinitions name="group"/>
-</com.documentum.services.preset.definition:PresetPackageDefinition>

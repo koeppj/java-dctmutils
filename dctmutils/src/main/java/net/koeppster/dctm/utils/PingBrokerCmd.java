@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DatabindException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 
-public class PingBrokerCmd extends AbstractCmd {
+public class PingBrokerCmd extends AbstractCmd implements UtilsFunction {
 
   /**
    * Prints a Docbroker Map. 
@@ -21,7 +21,6 @@ public class PingBrokerCmd extends AbstractCmd {
    * @throws DatabindException 
    * @throws StreamWriteException 
    */
-  @Override
   public void execute(Namespace ns) throws UtilsException {
     DfLogger.debug(this, "PingBrokerCmd.execute({0})", new String[] {ns.toString()}, null);
     try {
