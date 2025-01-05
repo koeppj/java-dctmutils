@@ -1,4 +1,4 @@
-package net.koeppster.dctm.utils;
+package net.koeppster.dctm.types;
 
 import com.documentum.fc.common.DfLogger;
 

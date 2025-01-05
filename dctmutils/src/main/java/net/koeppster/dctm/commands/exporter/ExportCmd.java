@@ -1,4 +1,4 @@
-package net.koeppster.dctm.exporter;
+package net.koeppster.dctm.commands.exporter;
 
 import com.documentum.fc.client.DfQuery;
 import com.documentum.fc.client.IDfClient;
@@ -24,10 +24,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import me.tongfei.progressbar.ProgressBar;
-import net.koeppster.dctm.utils.AbstractCmd;
-import net.koeppster.dctm.utils.PasswordString;
-import net.koeppster.dctm.utils.StringArray;
-import net.koeppster.dctm.utils.StringArrayType;
+import net.koeppster.dctm.commands.AbstractCmd;
+import net.koeppster.dctm.types.PasswordString;
+import net.koeppster.dctm.types.StringArray;
+import net.koeppster.dctm.types.StringArrayType;
 import net.koeppster.dctm.utils.UtilsArgsParserFactory;
 import net.koeppster.dctm.utils.UtilsException;
 import net.koeppster.dctm.utils.UtilsFunction;

@@ -1,4 +1,4 @@
-package net.koeppster.dctm.utils;
+package net.koeppster.dctm.commands;
 
 import java.time.format.DateTimeFormatter;
 import java.time.Instant;
@@ -26,6 +26,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import net.koeppster.dctm.types.DocbrokerSpec;
+import net.koeppster.dctm.utils.UtilsArgsParserFactory;
 
 public abstract class AbstractCmd {
   protected static DfClientX clientX = new DfClientX();

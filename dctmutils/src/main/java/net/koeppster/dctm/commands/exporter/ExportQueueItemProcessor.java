@@ -1,4 +1,4 @@
-package net.koeppster.dctm.exporter;
+package net.koeppster.dctm.commands.exporter;
 
 import com.documentum.fc.client.IDfFolder;
 import com.documentum.fc.client.IDfSession;
@@ -17,7 +17,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Iterator;
-import net.koeppster.dctm.utils.AbstractCmd;
+
+import net.koeppster.dctm.commands.AbstractCmd;
 import net.koeppster.dctm.utils.UtilsException;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;

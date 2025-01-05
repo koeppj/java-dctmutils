@@ -1,4 +1,4 @@
-package net.koeppster.dctm.exporter;
+package net.koeppster.dctm.commands.exporter;
 
 import java.io.Serializable;
 import java.util.Date;

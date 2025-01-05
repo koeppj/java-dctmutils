@@ -1,4 +1,4 @@
-package net.koeppster.dctm.exporter;
+package net.koeppster.dctm.commands.exporter;
 
 import com.documentum.fc.common.DfLogger;
 import java.io.File;

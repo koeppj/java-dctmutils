@@ -1,4 +1,4 @@
-package net.koeppster.dctm.utils;
+package net.koeppster.dctm.types;
 
 import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.ArgumentParser;

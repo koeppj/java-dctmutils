@@ -1,4 +1,4 @@
-package net.koeppster.dctm.utils;
+package net.koeppster.dctm.commands;
 
 import java.io.IOException;
 
@@ -7,9 +7,26 @@ import com.documentum.fc.common.DfException;
 import com.documentum.fc.common.DfLogger;
 import com.documentum.fc.common.DfLoginInfo;
 import com.documentum.fc.common.IDfLoginInfo;
-import net.sourceforge.argparse4j.inf.Namespace;
 
-public class CheckLoginCmd extends AbstractCmd implements UtilsFunction{
+import net.koeppster.dctm.types.PasswordString;
+import net.koeppster.dctm.utils.UtilsArgsParserFactory;
+import net.koeppster.dctm.utils.UtilsException;
+import net.koeppster.dctm.utils.UtilsFunction;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.inf.Subparser;
+
+public class CheckLoginCmd extends AbstractCmd implements UtilsFunction {
+
+  public static final String CMD_CHECKLOGIN = "cheecklogin";
+
+  public static void addCommandToArgParser(UtilsArgsParserFactory argParser) throws ArgumentParserException {
+    Subparser cmd = argParser.addSubparser(CMD_CHECKLOGIN, "Check Login", new CheckLoginCmd());
+    argParser.addHostArg(cmd, false);
+    argParser.addRepoArg(cmd);
+    argParser.addUserArg(cmd);
+    argParser.addPasswordArg(cmd);
+  }
 
   public void execute(Namespace ns) throws UtilsException {
     DfLogger.debug(this, "Executing CheckLoginCmd.execute({0})", new String[] {ns.toString()},null);
