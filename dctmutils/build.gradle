@@ -9,6 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'distribution'
 }
 
 repositories {
@@ -16,14 +17,32 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    runOnly
+}
 
-// sourceSets {
-//    test {
-//        resources {
-//            srcDir 'C:/users/koepp/Documentum/config'
-//        }
-//    }
-// }
+distributions {
+    main {
+        contents {
+            from("$projectDir/test/etc") {
+                include("*.sample","README.md")
+                into('etc')
+            }
+            from("$projectDir/test/logs") {
+                include("README.md")
+                into('logs')
+            }
+            from("$projectDir/test/reports") {
+                include("README.md")
+                into('reports')
+            }
+            from("$projectDir/test/output") {
+                include("README.md")
+                into('output')
+            }
+        }
+    }
+}
 
 dependencies {
     // Use JUnit Jupiter for testing.
@@ -46,8 +65,8 @@ dependencies {
     implementation 'org.slf4j:slf4j-nop:2.0.16'
     implementation 'org.apache.commons:commons-io:1.3.2'
     implementation 'io.github.classgraph:classgraph:4.8.179'
-    implementation fileTree(dir:'C:/Program Files/Documentum/Shared', include: ['*.jar'])
-
+    compileOnly fileTree(dir:System.getenv("DM_HOME"), include: ['*.jar'])
+    runOnly fileTree(dir:System.getenv("DM_HOME"), include: ['*.jar'])
 }
 
 application {
@@ -67,11 +86,16 @@ tasks.named('test') {
 
 tasks.named('run') {
     workingDir = file("$projectDir/test")
-    classpath += files("$projectDir/test/etc")
+    classpath += files("$projectDir/test/etc") + configurations.runOnly
     doFirst {
         standardOutput = System.out
         errorOutput = System.err
     }
+}
+
+tasks.named('startScripts') {
+    unixStartScriptGenerator.template = resources.text.fromFile('templates/unixStartScript.txt')
+    windowsStartScriptGenerator.template = resources.text.fromFile('templates/windowsStartScript.txt')
 }
 
 java {
