@@ -5,6 +5,7 @@ import com.documentum.fc.client.IDfClient;
 import com.documentum.fc.client.IDfCollection;
 import com.documentum.fc.client.IDfQuery;
 import com.documentum.fc.client.IDfSession;
+import com.documentum.fc.client.IDfSessionManager;
 import com.documentum.fc.common.DfException;
 import com.documentum.fc.common.DfLogger;
 import com.documentum.fc.common.DfLoginInfo;
@@ -71,7 +72,7 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
   public static final String[] ARG_THREADS_NAMES = {"-t","--threads"};
   public static final String ARG_THREADS_HELP = "Number of Candidate Parser Thresds (default is three)";
 
-  private IDfSession session = null;
+  private IDfSessionManager sessionManager = null;
   private CSVPrinter exportPrinter = null;
   private PrintStream warningStream = System.err;
   private ArrayList<String> attributes = new ArrayList<String>();
@@ -80,6 +81,7 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
   private File outputDir = null;
   private String candidateQuery = null;
   private ExecutorService itemProcessorService = null;
+  private String repo = null;
   
     public void execute(Namespace arg0) throws UtilsException {
       try {
@@ -137,7 +139,9 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
     private void buildCandidateList() throws UtilsException {
       DfLogger.debug(this, "Building candidate list", null, null);
       IDfCollection coll = null;
+      IDfSession session = null;
       try {
+        session = sessionManager.getSession(repo);
         IDfQuery query = new DfQuery();
         query.setDQL(
             "SELECT i_chronicle_id, r_object_id, r_modify_date FROM ".concat(this.candidateQuery));
@@ -157,6 +161,9 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
             DfLogger.warn(this, "Error closing collection", null, e);
           }
         }
+        if ((null != session) && session.isConnected()) {
+          sessionManager.release(session);
+        }
       }
     }
   
@@ -172,7 +179,7 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
         for (ExportQueueItem obj: items) {
           ExportQueueItemProcessor processor =
               new ExportQueueItemProcessor(
-                  queueManager, session, customAttribs, exportPrinter, outputDir, warningStream);
+                  queueManager, sessionManager,repo, customAttribs, exportPrinter, outputDir, warningStream);
           itemProcessorService.submit(() -> {
             try {
               processor.processCandidate(obj);
@@ -209,13 +216,16 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
   
     private void initialize(Namespace ns) throws UtilsException {
       DfLogger.debug(this, "Initializing", null, null);
+      this.repo = ns.getString(UtilsArgsParserFactory.ARG_REPO);
       try {
+
         IDfClient client = getClient(ns.get(UtilsArgsParserFactory.ARG_HOST));
         IDfLoginInfo loginInfo = new DfLoginInfo();
         loginInfo.setUser(ns.getString(UtilsArgsParserFactory.ARG_USER));
         PasswordString password = (PasswordString) ns.get(UtilsArgsParserFactory.ARG_PASS);
         loginInfo.setPassword(password.getPassword());
-        session = client.newSession(ns.getString(UtilsArgsParserFactory.ARG_REPO), loginInfo);
+        sessionManager = client.newSessionManager();
+        sessionManager.setIdentity(ns.getString(UtilsArgsParserFactory.ARG_REPO), loginInfo);
       } catch (DfException e) {
         throw new UtilsException(
             String.format("Error connecting to Documentum: %s", e.getMessage()), e);
@@ -315,10 +325,6 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
 
   private void shutdown() {
     try {
-      if (session != null && session.isConnected()) {
-        DfLogger.debug(this, "Disconnecting from Documentum", null, null);
-        session.disconnect();
-      }
       if (exportPrinter != null) {
         DfLogger.debug(this, "Closing Export File", null, null);
         exportPrinter.flush();
@@ -329,7 +335,7 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
         warningStream.flush();
         warningStream.close();
       }
-    } catch (DfException | IOException e) {
+    } catch (IOException e) {
       DfLogger.warn(this, "Error Shutting Down", null, e);
     }
     if (null != queueManager) {

@@ -148,8 +148,8 @@ case "\$( uname )" in                #(
 esac
 
 # Make sure DM_HOME is set and points to a valid DFC
-if [ -n "\$DM_HOME"] ; then
-    if [ ! -e "\$DH_HOME\dfc.jar" ] ; then 
+if [ -n "\$DM_HOME" ] ; then
+    if [ ! -e "\$DH_HOME/dfc.jar" ] ; then 
         die "ERROR: DM_HOME is not set to a valid DFC: \$DM_HOME
 
 Please set the DM_HOME variable in your environment to match the

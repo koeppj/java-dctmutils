@@ -22,7 +22,7 @@ public class PIngDocbaseCmd extends AbstractCmd implements UtilsFunction {
 public void execute(Namespace ns) throws UtilsException {
     try {
       getServerMap(ns.get(UtilsArgsParserFactory.ARG_HOST), ns.get(UtilsArgsParserFactory.ARG_REPO));
-      System.out.printf("Found docbase %s%n", ns.get(UtilsArgsParserFactory.ARG_REPO));
+      System.out.printf("Found docbase %s%n", ns.getString(UtilsArgsParserFactory.ARG_REPO));
     } catch (DfException e) {
       throw new UtilsException(String.format("Docbase not found.  Error is %s",e.getMessage()), e);
     }

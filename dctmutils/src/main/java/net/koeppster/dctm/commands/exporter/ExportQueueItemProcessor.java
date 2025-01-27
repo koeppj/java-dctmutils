@@ -2,6 +2,7 @@ package net.koeppster.dctm.commands.exporter;
 
 import com.documentum.fc.client.IDfFolder;
 import com.documentum.fc.client.IDfSession;
+import com.documentum.fc.client.IDfSessionManager;
 import com.documentum.fc.client.IDfSysObject;
 import com.documentum.fc.common.DfException;
 import com.documentum.fc.common.DfId;
@@ -29,21 +30,24 @@ public class ExportQueueItemProcessor extends AbstractCmd {
   private static final String WARN_LEVEL = "WARN";
 
   private ExportDatabaseManager queueManager;
-  private IDfSession session;
+  private IDfSessionManager sessionManager;
   private ArrayList<String> customAttribs;
+  private String repo;
   private CSVPrinter exportPrinter;
   private File outputDir;
   private PrintStream warningStream;
 
   public ExportQueueItemProcessor(
       ExportDatabaseManager queueManager,
-      IDfSession session,
+      IDfSessionManager sessionManager,
+      String repo,
       ArrayList<String> customAttribs,
       CSVPrinter exportPrinter,
       File outputDir,
       PrintStream warningStream) {
     this.queueManager = queueManager;
-    this.session = session;
+    this.sessionManager = sessionManager;
+    this.repo = repo;
     this.customAttribs = customAttribs;
     this.exportPrinter = exportPrinter;
     this.outputDir = outputDir;
@@ -53,9 +57,11 @@ public class ExportQueueItemProcessor extends AbstractCmd {
   public void processCandidate(ExportQueueItem arg0) throws UtilsException {
     DfLogger.debug(this, "Processing candidate {0}", new String[] {arg0.toString()}, null);
 
+    IDfSession session = null;
     queueManager.markItemInprogress(arg0.getChronicleId());
 
     try {
+      session = sessionManager.getSession(repo);
       IDfSysObject obj = (IDfSysObject) session.getObject(new DfId(arg0.getObjectId()));
 
       // If there is no content do not export it
@@ -120,6 +126,11 @@ public class ExportQueueItemProcessor extends AbstractCmd {
       throw new UtilsException(
           String.format("Documentum Error Processing List: %s", e.getMessage()), e);
     }
+    finally {
+      if ((null != session) && session.isConnected()) {
+        sessionManager.release(session);
+      }
+    }
     queueManager.markItemComplete(arg0.getChronicleId());
   }
 
@@ -138,7 +149,7 @@ public class ExportQueueItemProcessor extends AbstractCmd {
       FileUtils.forceMkdir(dir);
     }
     IDfExportOperation op = clientX.getExportOperation();
-    op.setSession(session);
+    op.setSession(arg1.getSession());
     op.setDestinationDirectory(fullPath);
     IDfExportNode node = (IDfExportNode) op.add(arg1);
     node.setFormat(arg1.getFormat().getName());

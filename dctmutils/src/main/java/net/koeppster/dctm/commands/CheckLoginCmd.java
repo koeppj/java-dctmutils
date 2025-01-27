@@ -18,7 +18,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
 
 public class CheckLoginCmd extends AbstractCmd implements UtilsFunction {
 
-  public static final String CMD_CHECKLOGIN = "cheecklogin";
+  public static final String CMD_CHECKLOGIN = "checklogin";
 
   public static void addCommandToArgParser(UtilsArgsParserFactory argParser) throws ArgumentParserException {
     Subparser cmd = argParser.addSubparser(CMD_CHECKLOGIN, "Check Login", new CheckLoginCmd());
