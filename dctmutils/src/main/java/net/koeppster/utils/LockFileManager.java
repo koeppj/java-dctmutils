@@ -1,7 +1,6 @@
 package net.koeppster.utils;
 
 import com.documentum.fc.common.DfLogger;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.RandomAccessFile;

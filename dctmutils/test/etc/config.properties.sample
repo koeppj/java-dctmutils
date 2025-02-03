@@ -1,8 +1,11 @@
+# Documentum Docubase to export content from (requried)
 repo=sandbox
+# The qualification part of the DQL query used to select content
 query=dm_document ENABLE(RETURN_TOP 200)
 attribs=object_name,title,foo_bar,r_modify_date,r_content_size,r_immutable_flag
 dir=output
 database=reports/items.db
 file=reports/file.csv
 warning=reports/warnings.txt
+# Repository user (required)
 user=sandbox
