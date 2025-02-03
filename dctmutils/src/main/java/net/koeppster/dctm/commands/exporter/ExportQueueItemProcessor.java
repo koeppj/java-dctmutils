@@ -21,8 +21,11 @@ import java.util.Iterator;
 
 import net.koeppster.dctm.commands.AbstractCmd;
 import net.koeppster.dctm.utils.UtilsException;
+import net.koeppster.utils.LockFileManager;
+
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class ExportQueueItemProcessor extends AbstractCmd {
 
@@ -36,6 +39,7 @@ public class ExportQueueItemProcessor extends AbstractCmd {
   private CSVPrinter exportPrinter;
   private File outputDir;
   private PrintStream warningStream;
+  private LockFileManager lockFileManager;
 
   public ExportQueueItemProcessor(
       ExportDatabaseManager queueManager,
@@ -44,7 +48,8 @@ public class ExportQueueItemProcessor extends AbstractCmd {
       ArrayList<String> customAttribs,
       CSVPrinter exportPrinter,
       File outputDir,
-      PrintStream warningStream) {
+      PrintStream warningStream,
+      LockFileManager lockFileManeger) {
     this.queueManager = queueManager;
     this.sessionManager = sessionManager;
     this.repo = repo;
@@ -52,9 +57,10 @@ public class ExportQueueItemProcessor extends AbstractCmd {
     this.exportPrinter = exportPrinter;
     this.outputDir = outputDir;
     this.warningStream = warningStream;
+    this.lockFileManager = lockFileManeger;
   }
 
-  public void processCandidate(ExportQueueItem arg0) throws UtilsException {
+  public void processCandidate(ExportQueueItem arg0) throws UtilsException, InterruptedException {
     DfLogger.debug(this, "Processing candidate {0}", new String[] {arg0.toString()}, null);
 
     IDfSession session = null;
@@ -105,6 +111,7 @@ public class ExportQueueItemProcessor extends AbstractCmd {
         fileName = fileName.concat(".").concat(extension);
       }
 
+
       // Add path and filename to exported filename to the attributes list
       node.put("path", firstPath.concat("/").concat(fileName));
 
@@ -117,21 +124,65 @@ public class ExportQueueItemProcessor extends AbstractCmd {
         exportPrinter.printRecord(getIterbleNode(node));
       }
 
+      // If the output dir parameter was speficied output the file.
       if (null != outputDir) {
-        exportItemFile(firstPath, obj);
+        // Check if the file already exists
+        String fullPath = this.outputDir.getAbsolutePath().concat(firstPath);
+        File dir = new File(fullPath);
+        if (!dir.exists()) {
+          FileUtils.forceMkdir(dir);
+        }
+        this.lockFileManager.getLock(Thread.currentThread().getName());
+        fileName = determineFileName(fullPath, fileName, 0);
+        obj.getFile(fullPath.concat("/").concat(fileName));
+        DfLogger.debug(this,"Saved file {0}", new String[] {fullPath.concat("/").concat(fileName)},null);
+        this.lockFileManager.releaseLock(Thread.currentThread().getName());
       }
-    } catch (DfException | IOException e) {
+    } catch (Throwable e) {
       DfLogger.error(this, "Error processing candidate {0}", new String[] {arg0.toString()}, e);
       printWarning(WARN_LEVEL, String.format("Error processing candidate: %s", e.getMessage()));
       throw new UtilsException(
           String.format("Documentum Error Processing List: %s", e.getMessage()), e);
     }
     finally {
+      try {
+        this.lockFileManager.releaseLock(Thread.currentThread().getName());
+      } catch (IOException e) {
+        DfLogger.warn(this, "Error releasing lock: {0}", new String[] {e.getMessage()}, e);
+      }
       if ((null != session) && session.isConnected()) {
         sessionManager.release(session);
       }
     }
     queueManager.markItemComplete(arg0.getChronicleId());
+  }
+
+  /**
+   * Determine the filemame by checking if one already exists and return an incremented
+   * value much like downloads from a browser
+   * @param arg0 The full patch to the file
+   * @param arg1 The filename itself
+   * @param arg2 The starting number (0 means first try without the ())
+   * @return
+   */
+  private String determineFileName(String arg0, String arg1, int arg2) {
+    DfLogger.debug(this,"determineFileName({0},{1},{2})",new Object[] {arg0,arg1,arg2},null);
+    File file = new File(arg0.concat("/").concat(arg1));
+    if (!file.exists()) {
+      return arg1;
+    }
+    arg2++;
+    if (arg2 == 1) {
+      String preStr = StringUtils.substringBeforeLast(arg1, ".");
+      String postStr = StringUtils.substringAfterLast(arg1, ".");
+      return determineFileName(arg0,preStr.concat(" (1).").concat(postStr),arg2);
+    }
+    else {
+      String incString = " (".concat(Integer.toString(arg2)).concat(")");
+      String preStr = StringUtils.substringBeforeLast(arg1,incString);
+      String postStr = StringUtils.substringAfterLast(arg1,incString);
+      return determineFileName(arg0, preStr.concat(" (").concat(Integer.toString(arg2)).concat(")").concat(postStr), arg2);
+    }
   }
 
   /**

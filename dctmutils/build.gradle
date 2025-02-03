@@ -12,6 +12,11 @@ plugins {
     id 'distribution'
 }
 
+/*
+ * Define at user level (e.g. ~/.gradle/gradle.properties) as this is machine/OS specific
+ */ 
+def dmHome=project.findProperty("dm_home")
+
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
@@ -65,8 +70,8 @@ dependencies {
     implementation 'org.slf4j:slf4j-nop:2.0.16'
     implementation 'org.apache.commons:commons-io:1.3.2'
     implementation 'io.github.classgraph:classgraph:4.8.179'
-    compileOnly fileTree(dir:System.getenv("DM_HOME"), include: ['*.jar'])
-    runOnly fileTree(dir:System.getenv("DM_HOME"), include: ['*.jar'])
+    compileOnly fileTree(dir:dmHome, include: ['*.jar'])
+    runOnly fileTree(dir:dmHome, include: ['*.jar'])
 }
 
 application {

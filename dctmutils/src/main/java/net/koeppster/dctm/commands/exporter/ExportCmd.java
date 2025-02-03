@@ -32,6 +32,7 @@ import net.koeppster.dctm.types.StringArrayType;
 import net.koeppster.dctm.utils.UtilsArgsParserFactory;
 import net.koeppster.dctm.utils.UtilsException;
 import net.koeppster.dctm.utils.UtilsFunction;
+import net.koeppster.utils.LockFileManager;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -82,6 +83,7 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
   private String candidateQuery = null;
   private ExecutorService itemProcessorService = null;
   private String repo = null;
+  private LockFileManager lockFileManager = null;
   
     public void execute(Namespace arg0) throws UtilsException {
       try {
@@ -179,22 +181,20 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
         for (ExportQueueItem obj: items) {
           ExportQueueItemProcessor processor =
               new ExportQueueItemProcessor(
-                  queueManager, sessionManager,repo, customAttribs, exportPrinter, outputDir, warningStream);
+                  queueManager, sessionManager,repo, customAttribs, exportPrinter, outputDir, warningStream, lockFileManager);
           itemProcessorService.submit(() -> {
-            try {
-              processor.processCandidate(obj);
-            }
-            catch (UtilsException e) {
-
-            }
-            finally {
+              try {
+                  processor.processCandidate(obj);
+              } catch (UtilsException | InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw new RuntimeException(e);
+              }
               pb.step();
               latch.countDown();
-            }
           });
         }
         latch.await();
-      } catch (InterruptedException e) {
+      } catch (RuntimeException | InterruptedException e) {
         Thread.currentThread().interrupt(); 
         throw new UtilsException("Issue processing item",e);
       } 
@@ -264,8 +264,13 @@ public class ExportCmd extends AbstractCmd implements UtilsFunction {
         }
       }
   
+      // Set up the retry DB and file system lock
+      File dbFile = (File) ns.get(ARG_DATABASE);
       boolean resetDb = ns.get(ARG_RESET);
-      this.queueManager = new ExportDatabaseManager((File) ns.get(ARG_DATABASE), resetDb);
+      this.queueManager = new ExportDatabaseManager(dbFile, resetDb);
+
+      String dbLocation = dbFile.getParentFile().getAbsolutePath();
+      this.lockFileManager = new LockFileManager(dbLocation.concat("/").concat("filesystem.lck"));
   
       this.outputDir = (File) ns.get(ARG_DIR);
   
