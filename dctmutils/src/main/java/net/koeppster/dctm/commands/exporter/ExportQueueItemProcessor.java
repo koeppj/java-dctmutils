@@ -137,6 +137,8 @@ public class ExportQueueItemProcessor extends AbstractCmd {
         obj.getFile(fullPath.concat("/").concat(fileName));
         DfLogger.debug(this,"Saved file {0}", new String[] {fullPath.concat("/").concat(fileName)},null);
         this.lockFileManager.releaseLock(Thread.currentThread().getName());
+        // Update path and filename to exported filename to the attributes list
+        node.put("path", firstPath.concat("/").concat(fileName));
       }
     } catch (Throwable e) {
       DfLogger.error(this, "Error processing candidate {0}", new String[] {arg0.toString()}, e);
@@ -179,42 +181,12 @@ public class ExportQueueItemProcessor extends AbstractCmd {
     }
     else {
       String incString = " (".concat(Integer.toString(arg2)).concat(")");
-      String preStr = StringUtils.substringBeforeLast(arg1,incString);
-      String postStr = StringUtils.substringAfterLast(arg1,incString);
+      String searchStr = " (".concat(Integer.toString(arg2-1)).concat(")");
+      String preStr = StringUtils.substringBeforeLast(arg1,searchStr);
+      String postStr = StringUtils.substringAfterLast(arg1,searchStr);
+      DfLogger.debug(this,"Concatenating {0}, {1}, {2}",new String[] {preStr,incString,postStr},null);
       return determineFileName(arg0, preStr.concat(" (").concat(Integer.toString(arg2)).concat(")").concat(postStr), arg2);
     }
-  }
-
-  /**
-   * Use the ExportService to download the file.
-   * @param arg0 Location to export the file to.
-   * @param arg1 The Object ID to download.
-   * @return <code>if the operation succeded.
-   * @throws DfException
-   * @throws IOException
-   */
-  private boolean exportItemFile(String arg0, IDfSysObject arg1) throws DfException, IOException {
-    String fullPath = this.outputDir.getAbsolutePath().concat("/").concat(arg0);
-    File dir = new File(fullPath);
-    if (!dir.exists()) {
-      FileUtils.forceMkdir(dir);
-    }
-    IDfExportOperation op = clientX.getExportOperation();
-    op.setSession(arg1.getSession());
-    op.setDestinationDirectory(fullPath);
-    IDfExportNode node = (IDfExportNode) op.add(arg1);
-    node.setFormat(arg1.getFormat().getName());
-    boolean result = op.execute();
-    if (!result) {
-      IDfOperationError error = (IDfOperationError) op.getErrors().get(0);
-      warningStream.println(String.format("%s: %s", "ERROR", error.getMessage()));
-      DfLogger.warn(
-          this,
-          "Error downloading documment: {0}",
-          new String[] {error.getException().getMessage()},
-          (Throwable) error.getException());
-    }
-    return result;
   }
 
   private Iterable<Object> getIterbleNode(ObjectNode node) {
